@@ -3,7 +3,7 @@ package tampah_test
 import (
 	"testing"
 
-	"github.com/uwuh/tampah"
+	"github.com/haritsfahreza/tampah"
 )
 
 type testStruct struct {

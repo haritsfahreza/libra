@@ -1,7 +1,7 @@
-[![GoDoc](https://godoc.org/github.com/uwuh/tampah?status.svg)](https://godoc.org/github.com/uwuh/tampah)
-[![Build Status](https://travis-ci.org/uwuh/tampah.svg?branch=master)](https://travis-ci.org/uwuh/tampah)
-[![codecov](https://codecov.io/gh/uwuh/tampah/branch/master/graph/badge.svg)](https://codecov.io/gh/uwuh/tampah)
-[![Go Report Card](https://goreportcard.com/badge/github.com/uwuh/tampah)](https://goreportcard.com/report/github.com/uwuh/tampah)
+[![GoDoc](https://godoc.org/github.com/haritsfahreza/tampah?status.svg)](https://godoc.org/github.com/haritsfahreza/tampah)
+[![Build Status](https://travis-ci.org/haritsfahreza/tampah.svg?branch=master)](https://travis-ci.org/haritsfahreza/tampah)
+[![codecov](https://codecov.io/gh/haritsfahreza/tampah/branch/master/graph/badge.svg)](https://codecov.io/gh/haritsfahreza/tampah)
+[![Go Report Card](https://goreportcard.com/badge/github.com/haritsfahreza/tampah)](https://goreportcard.com/report/github.com/haritsfahreza/tampah)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 # tampah
@@ -9,14 +9,14 @@ Tampah is a Go library to compare the object and spot the difference between two
 
 ## Installation
 ```sh
-$ go get -u github.com/uwuh/tampah
+$ go get -u github.com/haritsfahreza/tampah
 ```
 
 ## Usage
 ```go
 package main
 
-import "github.com/uwuh/tampah"
+import "github.com/haritsfahreza/tampah"
 
 type Person struct {
 	Name      string
