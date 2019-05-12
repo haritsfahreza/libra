@@ -41,5 +41,14 @@ for i, diff := range diffs {
 ```
 Please see [examples](https://github.com/haritsfahreza/libra/tree/master/examples) for the other usage references
 
+## Benchmark
+```sh
+goos: linux
+goarch: amd64
+pkg: github.com/haritsfahreza/libra
+BenchmarkCompareStruct-8   	  500000	      2840 ns/op	    1136 B/op	      31 allocs/op
+BenchmarkCompareMap-8      	  300000	      4781 ns/op	    1696 B/op	      54 allocs/op
+```
+
 ## License
 See [LICENSE](LICENSE)

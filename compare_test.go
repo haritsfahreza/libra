@@ -179,3 +179,54 @@ func TestCompare(t *testing.T) {
 		}
 	})
 }
+
+var bDiffs []libra.Diff
+
+func benchmarkCompare(old, new interface{}, b *testing.B) {
+	var diffs []libra.Diff
+	var err error
+	for i := 0; i < b.N; i++ {
+		diffs, err = libra.Compare(nil, old, new)
+		if err != nil {
+			panic(err)
+		}
+	}
+	bDiffs = diffs
+}
+func BenchmarkCompareStruct(b *testing.B) {
+	benchmarkCompare(testStruct{
+		Name:      "test1",
+		Age:       22,
+		Weight:    float64(80),
+		IsMarried: true,
+		Hobbies:   []string{"Swimming"},
+		Numbers:   []int{1, 2},
+	}, testStruct{
+		Name:      "test1",
+		Age:       23,
+		Weight:    float64(85),
+		IsMarried: true,
+		Hobbies:   []string{"Swimming", "Hiking"},
+		Numbers:   []int{2},
+	}, b)
+}
+
+func BenchmarkCompareMap(b *testing.B) {
+	benchmarkCompare(map[string]interface{}{
+		"Name":           "Gopher",
+		"Age":            10,
+		"Weight":         50.0,
+		"IsMarried":      false,
+		"Hobbies":        []string{"Coding"},
+		"Numbers":        []int{0, 1, 2},
+		"AdditionalInfo": "I love Golang",
+	}, map[string]interface{}{
+		"Name":           "Gopher",
+		"Age":            10,
+		"Weight":         60.0,
+		"IsMarried":      false,
+		"Hobbies":        []string{"Hacking"},
+		"Numbers":        []int{1, 2, 3},
+		"AdditionalInfo": "I love Golang so much",
+	}, b)
+}
