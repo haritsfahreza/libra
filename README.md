@@ -21,22 +21,25 @@ oldPerson := Person{
 	Weight:    float64(80),
 	IsMarried: true,
 }
+
 newPerson := Person{
 	Name:      "Sudirman",
 	Age:       23,
 	Weight:    float64(85),
 	IsMarried: true,
 }
+
 diffs, err := libra.Compare(context.Background(), oldPerson, newPerson)
 if err != nil {
 	panic(err)
 }
-//use the diffs array with your own purpose e.g. simply print it
+
+//Use the diffs array with your own purpose e.g. printout
 for i, diff := range diffs {
-	fmt.Printf("#%d : %s %s %s Old : %v New : %v", i, diff.ChangeType, diff.Field, diff.ObjectType, diff.Old, diff.New)
+	fmt.Printf("#%d : ChangeType=%s Field=%s ObjectType=%s Old='%v' New='%v'\n", i, diff.ChangeType, diff.Field, diff.ObjectType, diff.Old, diff.New)
 }
 ```
-Please see [examples](https://github.com/haritsfahreza/libra/tree/master/examples) for the other examples
+Please see [examples](https://github.com/haritsfahreza/libra/tree/master/examples) for the other usage references
 
 ## License
 See [LICENSE](LICENSE)
