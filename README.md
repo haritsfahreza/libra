@@ -14,35 +14,29 @@ $ go get -u github.com/haritsfahreza/libra
 
 ## Usage
 ```go
-package main
-
-import "github.com/haritsfahreza/libra"
-
-type Person struct {
-	Name      string
-	Age       int
-	Weight    float64
-	IsMarried bool
+//Prepare the objects that you want to compare
+oldPerson := Person{
+	Name:      "Sudirman",
+	Age:       22,
+	Weight:    float64(80),
+	IsMarried: true,
 }
-
-func main() {
-	//The object could be from your database or HTTP request
-	oldPerson := Person{
-		Name:      "Sudirman",
-		Age:       22,
-		Weight:    float64(80),
-		IsMarried: true,
-	}
-	newPerson := Person{
-		Name:      "Sudirman",
-		Age:       23,
-		Weight:    float64(85),
-		IsMarried: true,
-	}
-	diffs, err := libra.Compare(context.Background(), oldPerson, newPerson)
+newPerson := Person{
+	Name:      "Sudirman",
+	Age:       23,
+	Weight:    float64(85),
+	IsMarried: true,
 }
-
+diffs, err := libra.Compare(context.Background(), oldPerson, newPerson)
+if err != nil {
+	panic(err)
+}
+//use the diffs array with your own purpose e.g. simply print it
+for i, diff := range diffs {
+	fmt.Printf("#%d : %s %s %s Old : %v New : %v", i, diff.ChangeType, diff.Field, diff.ObjectType, diff.Old, diff.New)
+}
 ```
+Please see [examples](https://github.com/haritsfahreza/libra/tree/master/examples) for the other examples
 
 ## License
 See [LICENSE](LICENSE)
