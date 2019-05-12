@@ -1,22 +1,22 @@
-[![GoDoc](https://godoc.org/github.com/haritsfahreza/tampah?status.svg)](https://godoc.org/github.com/haritsfahreza/tampah)
-[![Build Status](https://travis-ci.org/haritsfahreza/tampah.svg?branch=master)](https://travis-ci.org/haritsfahreza/tampah)
-[![codecov](https://codecov.io/gh/haritsfahreza/tampah/branch/master/graph/badge.svg)](https://codecov.io/gh/haritsfahreza/tampah)
-[![Go Report Card](https://goreportcard.com/badge/github.com/haritsfahreza/tampah)](https://goreportcard.com/report/github.com/haritsfahreza/tampah)
+[![GoDoc](https://godoc.org/github.com/haritsfahreza/libra?status.svg)](https://godoc.org/github.com/haritsfahreza/libra)
+[![Build Status](https://travis-ci.org/haritsfahreza/libra.svg?branch=master)](https://travis-ci.org/haritsfahreza/libra)
+[![codecov](https://codecov.io/gh/haritsfahreza/libra/branch/master/graph/badge.svg)](https://codecov.io/gh/haritsfahreza/libra)
+[![Go Report Card](https://goreportcard.com/badge/github.com/haritsfahreza/libra)](https://goreportcard.com/report/github.com/haritsfahreza/libra)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-# tampah
-Tampah is a Go library to compare the object and spot the difference between two of them
+# libra
+Libra is a Go library to compare the object and spot the difference between two of them
 
 ## Installation
 ```sh
-$ go get -u github.com/haritsfahreza/tampah
+$ go get -u github.com/haritsfahreza/libra
 ```
 
 ## Usage
 ```go
 package main
 
-import "github.com/haritsfahreza/tampah"
+import "github.com/haritsfahreza/libra"
 
 type Person struct {
 	Name      string
@@ -39,7 +39,7 @@ func main() {
 		Weight:    float64(85),
 		IsMarried: true,
 	}
-	diffs, err := tampah.Compare(context.Background(), oldPerson, newPerson)
+	diffs, err := libra.Compare(context.Background(), oldPerson, newPerson)
 }
 
 ```

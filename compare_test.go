@@ -1,9 +1,9 @@
-package tampah_test
+package libra_test
 
 import (
 	"testing"
 
-	"github.com/haritsfahreza/tampah"
+	"github.com/haritsfahreza/libra"
 )
 
 type testStruct struct {
@@ -19,17 +19,17 @@ type anotherTestStruct struct {
 
 func TestCompare(t *testing.T) {
 	t.Run("failed when all nil", func(t *testing.T) {
-		if _, err := tampah.Compare(nil, nil, nil); err == nil {
+		if _, err := libra.Compare(nil, nil, nil); err == nil {
 			t.Errorf("Error must not be nil. expected: %s actual: %v", "all values cannot be nil", err)
 		}
 	})
 
 	t.Run("failed when different type", func(t *testing.T) {
-		if _, err := tampah.Compare(nil, "", 1); err == nil {
+		if _, err := libra.Compare(nil, "", 1); err == nil {
 			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
 		}
 
-		if _, err := tampah.Compare(nil, testStruct{
+		if _, err := libra.Compare(nil, testStruct{
 			Name: "test1",
 		}, anotherTestStruct{
 			Name: "test1",
@@ -39,7 +39,7 @@ func TestCompare(t *testing.T) {
 	})
 
 	t.Run("succeed when create new object", func(t *testing.T) {
-		diffs, err := tampah.Compare(nil, nil, testStruct{
+		diffs, err := libra.Compare(nil, nil, testStruct{
 			Name: "test1",
 			Age:  22,
 		})
@@ -50,12 +50,12 @@ func TestCompare(t *testing.T) {
 			t.Errorf("Compare result length must be only one. expected: %d actual: %d", 1, len(diffs))
 		}
 
-		if diffs[0].ChangeType != tampah.New {
-			t.Errorf("Invalid ChangeType. expected: %s actual: %s", tampah.New, diffs[0].ChangeType)
+		if diffs[0].ChangeType != libra.New {
+			t.Errorf("Invalid ChangeType. expected: %s actual: %s", libra.New, diffs[0].ChangeType)
 		}
 
-		if diffs[0].ObjectType != "tampah_test.testStruct" {
-			t.Errorf("Invalid ObjectType. expected: %s actual: %s", "tampah_test.testStruct", diffs[0].ObjectType)
+		if diffs[0].ObjectType != "libra_test.testStruct" {
+			t.Errorf("Invalid ObjectType. expected: %s actual: %s", "libra_test.testStruct", diffs[0].ObjectType)
 		}
 
 		if diffs[0].New == nil {
@@ -68,7 +68,7 @@ func TestCompare(t *testing.T) {
 	})
 
 	t.Run("succeed when removed an object", func(t *testing.T) {
-		diffs, err := tampah.Compare(nil, testStruct{
+		diffs, err := libra.Compare(nil, testStruct{
 			Name: "test1",
 			Age:  22,
 		}, nil)
@@ -79,12 +79,12 @@ func TestCompare(t *testing.T) {
 			t.Errorf("Compare result length must be only one. expected: %d actual: %d", 1, len(diffs))
 		}
 
-		if diffs[0].ChangeType != tampah.Removed {
-			t.Errorf("Invalid ChangeType. expected: %s actual: %s", tampah.Removed, diffs[0].ChangeType)
+		if diffs[0].ChangeType != libra.Removed {
+			t.Errorf("Invalid ChangeType. expected: %s actual: %s", libra.Removed, diffs[0].ChangeType)
 		}
 
-		if diffs[0].ObjectType != "tampah_test.testStruct" {
-			t.Errorf("Invalid ObjectType. expected: %s actual: %s", "tampah_test.testStruct", diffs[0].ObjectType)
+		if diffs[0].ObjectType != "libra_test.testStruct" {
+			t.Errorf("Invalid ObjectType. expected: %s actual: %s", "libra_test.testStruct", diffs[0].ObjectType)
 		}
 
 		if diffs[0].New != nil {
@@ -97,7 +97,7 @@ func TestCompare(t *testing.T) {
 	})
 
 	t.Run("succeed when changed two object", func(t *testing.T) {
-		diffs, err := tampah.Compare(nil, testStruct{
+		diffs, err := libra.Compare(nil, testStruct{
 			Name:      "test1",
 			Age:       22,
 			Weight:    float64(80),
@@ -116,12 +116,12 @@ func TestCompare(t *testing.T) {
 		} else {
 			expectedFields := []string{"Age", "Weight"}
 			for i := 0; i < len(diffs); i++ {
-				if diffs[i].ChangeType != tampah.Changed {
-					t.Errorf("Invalid diffs[%d].ChangeType. expected: %s actual: %s", i, tampah.Changed, diffs[i].ChangeType)
+				if diffs[i].ChangeType != libra.Changed {
+					t.Errorf("Invalid diffs[%d].ChangeType. expected: %s actual: %s", i, libra.Changed, diffs[i].ChangeType)
 				}
 
-				if diffs[i].ObjectType != "tampah_test.testStruct" {
-					t.Errorf("Invalid diffs[%d].ObjectType. expected: %s actual: %s", i, "tampah_test.testStruct", diffs[i].ObjectType)
+				if diffs[i].ObjectType != "libra_test.testStruct" {
+					t.Errorf("Invalid diffs[%d].ObjectType. expected: %s actual: %s", i, "libra_test.testStruct", diffs[i].ObjectType)
 				}
 
 				if diffs[i].Field != expectedFields[i] {
