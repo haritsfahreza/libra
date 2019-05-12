@@ -3,67 +3,127 @@ package libra
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
+	"strings"
 )
 
-var zeroValue = reflect.Value{}
+var defaultValue = reflect.Value{}
 
-//Compare is used to compare two different values and spot the differents from them
+//Compare is used to compare two different values and spot the differences from them
 func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
-	oldValue := reflect.ValueOf(old)
-	newValue := reflect.ValueOf(new)
+	oldObj := reflect.ValueOf(old)
+	newObj := reflect.ValueOf(new)
 
-	if err := validate(ctx, oldValue, newValue); err != nil {
+	if err := validate(ctx, oldObj, newObj); err != nil {
 		return nil, err
 	}
 
-	diff := []Diff{}
+	diffs := []Diff{}
 
-	if oldValue == zeroValue && newValue != zeroValue {
+	if oldObj == defaultValue && newObj != defaultValue {
 		//New object
-		diff = append(diff, Diff{
+		diffs = append(diffs, Diff{
 			ChangeType: New,
-			ObjectType: newValue.Type().String(),
-			New:        newValue.Interface(),
+			ObjectType: newObj.Type().String(),
+			New:        newObj.Interface(),
 		})
-		return diff, nil
-	} else if oldValue != zeroValue && newValue == zeroValue {
+		return diffs, nil
+	} else if oldObj != defaultValue && newObj == defaultValue {
 		//Removed object
-		diff = append(diff, Diff{
+		diffs = append(diffs, Diff{
 			ChangeType: Removed,
-			ObjectType: oldValue.Type().String(),
-			Old:        oldValue,
+			ObjectType: oldObj.Type().String(),
+			Old:        oldObj,
 		})
-		return diff, nil
+		return diffs, nil
 	} else {
-		//Changed object
-		objectType := oldValue.Type().String()
-		for i := 0; i < oldValue.NumField(); i++ {
-			oldFieldValue := oldValue.Field(i).Interface()
-			newFieldValue := newValue.Field(i).Interface()
-			typeField := oldValue.Type().Field(i)
+		if oldObj.Kind() == reflect.Struct {
+			objectType := oldObj.Type().String()
+			for i := 0; i < oldObj.NumField(); i++ {
+				typeField := oldObj.Type().Field(i)
+				oldField := oldObj.Field(i)
+				newField := newObj.Field(i)
 
-			if oldFieldValue != newFieldValue {
-				diff = append(diff, Diff{
-					ChangeType: Changed,
-					ObjectType: objectType,
-					Field:      typeField.Name,
-					Old:        oldFieldValue,
-					New:        newFieldValue,
-				})
+				diff, err := generateDiff(ctx, Changed, objectType, typeField.Name, oldField, newField)
+				if err != nil {
+					return nil, err
+				}
+
+				if diff != nil {
+					diffs = append(diffs, *diff)
+				}
 			}
+		} else if oldObj.Kind() == reflect.Map {
+			objectType := oldObj.Type().String()
+			for _, key := range oldObj.MapKeys() {
+				oldField := oldObj.MapIndex(key)
+				newField := newObj.MapIndex(key)
+
+				diff, err := generateDiff(ctx, Changed, objectType, key.String(), oldField, newField)
+				if err != nil {
+					return nil, err
+				}
+
+				if diff != nil {
+					diffs = append(diffs, *diff)
+				}
+			}
+		} else {
+			return nil, fmt.Errorf("Unsupported comparable values")
 		}
-		return diff, nil
+		return diffs, nil
 	}
 }
 
+func generateDiff(ctx context.Context, changeType ChangeType, objectType, fieldName string, oldField, newField reflect.Value) (*Diff, error) {
+	if err := validate(ctx, oldField, newField); err != nil {
+		return nil, fmt.Errorf("Error on validate key %s Error : %s", fieldName, err.Error())
+	}
+
+	var oldFieldValue, newFieldValue interface{}
+	if oldField.Kind() == reflect.Slice {
+		oldFieldValue = reflectArrayToString(ctx, oldField)
+		newFieldValue = reflectArrayToString(ctx, newField)
+	} else {
+		oldFieldValue = oldField.Interface()
+		newFieldValue = newField.Interface()
+	}
+
+	if oldFieldValue != newFieldValue {
+		return &Diff{
+			ChangeType: Changed,
+			ObjectType: objectType,
+			Field:      fieldName,
+			Old:        oldFieldValue,
+			New:        newFieldValue,
+		}, nil
+	}
+
+	return nil, nil
+}
+
 func validate(ctx context.Context, oldValue, newValue reflect.Value) error {
-	if oldValue == zeroValue && newValue == zeroValue {
+	if oldValue == defaultValue && newValue == defaultValue {
 		return errors.New("all values cannot be nil")
 	}
 
-	if (oldValue != reflect.Value{} && newValue != reflect.Value{}) && oldValue.Type() != newValue.Type() {
-		return errors.New("different values type")
+	if oldValue != defaultValue && newValue != defaultValue {
+		oldValueType := reflect.ValueOf(oldValue.Interface()).Type()
+		newValueType := reflect.ValueOf(newValue.Interface()).Type()
+
+		if oldValueType != newValueType {
+			return errors.New("different values type")
+		}
 	}
+
 	return nil
+}
+
+func reflectArrayToString(ctx context.Context, value reflect.Value) string {
+	var result string
+	for i := 0; i < value.Len(); i++ {
+		result += value.Index(i).String() + ","
+	}
+	return strings.TrimSuffix(result, ",")
 }

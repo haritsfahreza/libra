@@ -11,6 +11,8 @@ type testStruct struct {
 	Age       int
 	Weight    float64
 	IsMarried bool
+	Hobbies   []string
+	Numbers   []int
 }
 
 type anotherTestStruct struct {
@@ -96,25 +98,30 @@ func TestCompare(t *testing.T) {
 		}
 	})
 
-	t.Run("succeed when changed two object", func(t *testing.T) {
+	t.Run("succeed when changed two objects", func(t *testing.T) {
 		diffs, err := libra.Compare(nil, testStruct{
 			Name:      "test1",
 			Age:       22,
 			Weight:    float64(80),
 			IsMarried: true,
+			Hobbies:   []string{"Swimming"},
+			Numbers:   []int{1, 2},
 		}, testStruct{
 			Name:      "test1",
 			Age:       23,
 			Weight:    float64(85),
 			IsMarried: true,
+			Hobbies:   []string{"Swimming", "Hiking"},
+			Numbers:   []int{2},
 		})
 		if err != nil {
 			t.Errorf("Error must be nil. Got: %v", err)
 		}
-		if len(diffs) != 2 {
-			t.Errorf("Compare result length must be two. expected: %d actual: %d", 2, len(diffs))
+
+		expectedFields := []string{"Age", "Weight", "Hobbies", "Numbers"}
+		if len(diffs) != len(expectedFields) {
+			t.Errorf("Invalid result length. expected: %d actual: %d", len(expectedFields), len(diffs))
 		} else {
-			expectedFields := []string{"Age", "Weight"}
 			for i := 0; i < len(diffs); i++ {
 				if diffs[i].ChangeType != libra.Changed {
 					t.Errorf("Invalid diffs[%d].ChangeType. expected: %s actual: %s", i, libra.Changed, diffs[i].ChangeType)
@@ -129,9 +136,46 @@ func TestCompare(t *testing.T) {
 				}
 
 				if diffs[i].Old == diffs[i].New {
-					t.Errorf("diffs[i].Old must be different with diffs[%d].New. old: %s new: %v", i, diffs[i].Old, diffs[i].New)
+					t.Errorf("diffs[%d].Old must be different with diffs[%d].New. old: %s new: %v", i, i, diffs[i].Old, diffs[i].New)
 				}
 			}
+		}
+	})
+
+	t.Run("succeed when changed two maps", func(t *testing.T) {
+		diffs, err := libra.Compare(nil, map[string]interface{}{"Age": 22, "Weight": 80}, map[string]interface{}{"Age": 23, "Weight": 80})
+		if err != nil {
+			t.Errorf("Error must be nil. Got: %v", err)
+		}
+
+		expectedFields := []string{"Age"}
+		if len(diffs) != len(expectedFields) {
+			t.Errorf("Invalid result length. expected: %d actual: %d", len(expectedFields), len(diffs))
+		} else {
+			for i := 0; i < len(diffs); i++ {
+				if diffs[i].ChangeType != libra.Changed {
+					t.Errorf("Invalid diffs[%d].ChangeType. expected: %s actual: %s", i, libra.Changed, diffs[i].ChangeType)
+				}
+
+				if diffs[i].ObjectType != "map[string]interface {}" {
+					t.Errorf("Invalid diffs[%d].ObjectType. expected: %s actual: %s", i, "map[string]interface {}", diffs[i].ObjectType)
+				}
+
+				if diffs[i].Field != expectedFields[i] {
+					t.Errorf("Invalid diffs[%d].Field. expected: %s actual: %s", i, expectedFields[i], diffs[i].Field)
+				}
+
+				if diffs[i].Old == diffs[i].New {
+					t.Errorf("diffs[%d].Old must be different with diffs[%d].New. old: %s new: %v", i, i, diffs[i].Old, diffs[i].New)
+				}
+			}
+		}
+	})
+
+	t.Run("failed when the value is nil", func(t *testing.T) {
+		_, err := libra.Compare(nil, map[string]interface{}{"Age": "A", "Weight": 80}, map[string]interface{}{"Age": 12, "Weight": 80})
+		if err == nil {
+			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
 		}
 	})
 }
