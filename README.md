@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 # libra
-Libra is a Go library to compare the object and spot the difference between two of them
+Libra is a Go library to compare the objects and spot the difference(s) between two of them.
 
 ## Installation
 ```sh
