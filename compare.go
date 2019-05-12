@@ -82,9 +82,9 @@ func generateDiff(ctx context.Context, changeType ChangeType, objectType, fieldN
 	}
 
 	var oldFieldValue, newFieldValue interface{}
-	if oldField.Kind() == reflect.Slice {
-		oldFieldValue = reflectArrayToString(ctx, oldField)
-		newFieldValue = reflectArrayToString(ctx, newField)
+	if reflect.ValueOf(oldField.Interface()).Kind() == reflect.Slice {
+		oldFieldValue = reflectArrayToString(ctx, reflect.ValueOf(oldField.Interface()))
+		newFieldValue = reflectArrayToString(ctx, reflect.ValueOf(newField.Interface()))
 	} else {
 		oldFieldValue = oldField.Interface()
 		newFieldValue = newField.Interface()
@@ -123,7 +123,7 @@ func validate(ctx context.Context, oldValue, newValue reflect.Value) error {
 func reflectArrayToString(ctx context.Context, value reflect.Value) string {
 	var result string
 	for i := 0; i < value.Len(); i++ {
-		result += value.Index(i).String() + ","
+		result += fmt.Sprintf("%v,", value.Index(i).Interface())
 	}
 	return strings.TrimSuffix(result, ",")
 }
