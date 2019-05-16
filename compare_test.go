@@ -1,12 +1,13 @@
 package libra_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/haritsfahreza/libra"
 )
 
-type testStruct struct {
+type person struct {
 	Name      string
 	Age       int
 	Weight    float64
@@ -15,7 +16,7 @@ type testStruct struct {
 	Numbers   []int
 }
 
-type anotherTestStruct struct {
+type anotherPerson struct {
 	Name string
 }
 
@@ -31,9 +32,9 @@ func TestCompare(t *testing.T) {
 			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
 		}
 
-		if _, err := libra.Compare(nil, testStruct{
+		if _, err := libra.Compare(nil, person{
 			Name: "test1",
-		}, anotherTestStruct{
+		}, anotherPerson{
 			Name: "test1",
 		}); err == nil {
 			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
@@ -41,7 +42,7 @@ func TestCompare(t *testing.T) {
 	})
 
 	t.Run("succeed when create new object", func(t *testing.T) {
-		diffs, err := libra.Compare(nil, nil, testStruct{
+		diffs, err := libra.Compare(nil, nil, person{
 			Name: "test1",
 			Age:  22,
 		})
@@ -56,8 +57,8 @@ func TestCompare(t *testing.T) {
 			t.Errorf("Invalid ChangeType. expected: %s actual: %s", libra.New, diffs[0].ChangeType)
 		}
 
-		if diffs[0].ObjectType != "libra_test.testStruct" {
-			t.Errorf("Invalid ObjectType. expected: %s actual: %s", "libra_test.testStruct", diffs[0].ObjectType)
+		if diffs[0].ObjectType != "libra_test.person" {
+			t.Errorf("Invalid ObjectType. expected: %s actual: %s", "libra_test.person", diffs[0].ObjectType)
 		}
 
 		if diffs[0].New == nil {
@@ -70,7 +71,7 @@ func TestCompare(t *testing.T) {
 	})
 
 	t.Run("succeed when removed an object", func(t *testing.T) {
-		diffs, err := libra.Compare(nil, testStruct{
+		diffs, err := libra.Compare(nil, person{
 			Name: "test1",
 			Age:  22,
 		}, nil)
@@ -85,8 +86,8 @@ func TestCompare(t *testing.T) {
 			t.Errorf("Invalid ChangeType. expected: %s actual: %s", libra.Removed, diffs[0].ChangeType)
 		}
 
-		if diffs[0].ObjectType != "libra_test.testStruct" {
-			t.Errorf("Invalid ObjectType. expected: %s actual: %s", "libra_test.testStruct", diffs[0].ObjectType)
+		if diffs[0].ObjectType != "libra_test.person" {
+			t.Errorf("Invalid ObjectType. expected: %s actual: %s", "libra_test.person", diffs[0].ObjectType)
 		}
 
 		if diffs[0].New != nil {
@@ -99,14 +100,14 @@ func TestCompare(t *testing.T) {
 	})
 
 	t.Run("succeed when changed two objects", func(t *testing.T) {
-		diffs, err := libra.Compare(nil, testStruct{
+		diffs, err := libra.Compare(nil, person{
 			Name:      "test1",
 			Age:       22,
 			Weight:    float64(80),
 			IsMarried: true,
 			Hobbies:   []string{"Swimming"},
 			Numbers:   []int{1, 2},
-		}, testStruct{
+		}, person{
 			Name:      "test1",
 			Age:       23,
 			Weight:    float64(85),
@@ -127,8 +128,8 @@ func TestCompare(t *testing.T) {
 					t.Errorf("Invalid diffs[%d].ChangeType. expected: %s actual: %s", i, libra.Changed, diffs[i].ChangeType)
 				}
 
-				if diffs[i].ObjectType != "libra_test.testStruct" {
-					t.Errorf("Invalid diffs[%d].ObjectType. expected: %s actual: %s", i, "libra_test.testStruct", diffs[i].ObjectType)
+				if diffs[i].ObjectType != "libra_test.person" {
+					t.Errorf("Invalid diffs[%d].ObjectType. expected: %s actual: %s", i, "libra_test.person", diffs[i].ObjectType)
 				}
 
 				if diffs[i].Field != expectedFields[i] {
@@ -194,14 +195,14 @@ func benchmarkCompare(old, new interface{}, b *testing.B) {
 	bDiffs = diffs
 }
 func BenchmarkCompareStruct(b *testing.B) {
-	benchmarkCompare(testStruct{
+	benchmarkCompare(person{
 		Name:      "test1",
 		Age:       22,
 		Weight:    float64(80),
 		IsMarried: true,
 		Hobbies:   []string{"Swimming"},
 		Numbers:   []int{1, 2},
-	}, testStruct{
+	}, person{
 		Name:      "test1",
 		Age:       23,
 		Weight:    float64(85),
@@ -229,4 +230,37 @@ func BenchmarkCompareMap(b *testing.B) {
 		"Numbers":        []int{1, 2, 3},
 		"AdditionalInfo": "I love Golang so much",
 	}, b)
+}
+
+func ExampleCompare_struct() {
+	oldPerson := person{
+		Name:      "Gopher",
+		Age:       10,
+		Weight:    50.0,
+		IsMarried: false,
+		Hobbies:   []string{"Coding"},
+		Numbers:   []int{0, 1, 2},
+	}
+
+	newPerson := person{
+		Name:      "Gopher",
+		Age:       10,
+		Weight:    60.0,
+		IsMarried: false,
+		Hobbies:   []string{"Hacking"},
+		Numbers:   []int{1, 2, 3},
+	}
+
+	diffs, err := libra.Compare(nil, oldPerson, newPerson)
+	if err != nil {
+		panic(err)
+	}
+
+	for i, diff := range diffs {
+		fmt.Printf("#%d : ChangeType=%s Field=%s ObjectType=%s Old='%v' New='%v'\n", i, diff.ChangeType, diff.Field, diff.ObjectType, diff.Old, diff.New)
+	}
+	// Output:
+	// #0 : ChangeType=changed Field=Weight ObjectType=libra_test.person Old='50' New='60'
+	// #1 : ChangeType=changed Field=Hobbies ObjectType=libra_test.person Old='Coding' New='Hacking'
+	// #2 : ChangeType=changed Field=Numbers ObjectType=libra_test.person Old='0,1,2' New='1,2,3'
 }
