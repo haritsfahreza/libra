@@ -13,6 +13,7 @@ type testStruct struct {
 	IsMarried bool
 	Hobbies   []string
 	Numbers   []int
+	Ignore    string `libra:"ignore"`
 }
 
 type anotherTestStruct struct {
@@ -172,7 +173,7 @@ func TestCompare(t *testing.T) {
 		}
 	})
 
-	t.Run("failed when the value is nil", func(t *testing.T) {
+	t.Run("failed when the values has different type", func(t *testing.T) {
 		_, err := libra.Compare(nil, map[string]interface{}{"Age": "A", "Weight": 80}, map[string]interface{}{"Age": 12, "Weight": 80})
 		if err == nil {
 			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
