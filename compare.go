@@ -45,6 +45,11 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 				oldField := oldObj.Field(i)
 				newField := newObj.Field(i)
 
+				tag := typeField.Tag.Get("libra")
+				if tag == "ignore" {
+					continue
+				}
+
 				diff, err := generateDiff(ctx, Changed, objectType, typeField.Name, oldField, newField)
 				if err != nil {
 					return nil, err
