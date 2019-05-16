@@ -180,6 +180,42 @@ func TestCompare(t *testing.T) {
 			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
 		}
 	})
+
+	t.Run("success when ignore the field", func(t *testing.T) {
+		diffs, err := libra.Compare(nil, person{
+			Name:   "Test A",
+			Ignore: "Should not detected",
+		}, person{
+			Name:   "Test B",
+			Ignore: "Should not detected - ",
+		})
+		if err != nil {
+			t.Errorf("Error must be nil. Got: %v", err)
+		}
+
+		expectedFields := []string{"Name"}
+		if len(diffs) != len(expectedFields) {
+			t.Errorf("Invalid result length. expected: %d actual: %d", len(expectedFields), len(diffs))
+		} else {
+			for i := 0; i < len(diffs); i++ {
+				if diffs[i].ChangeType != libra.Changed {
+					t.Errorf("Invalid diffs[%d].ChangeType. expected: %s actual: %s", i, libra.Changed, diffs[i].ChangeType)
+				}
+
+				if diffs[i].ObjectType != "libra_test.person" {
+					t.Errorf("Invalid diffs[%d].ObjectType. expected: %s actual: %s", i, "libra_test.person", diffs[i].ObjectType)
+				}
+
+				if diffs[i].Field != expectedFields[i] {
+					t.Errorf("Invalid diffs[%d].Field. expected: %s actual: %s", i, expectedFields[i], diffs[i].Field)
+				}
+
+				if diffs[i].Old == diffs[i].New {
+					t.Errorf("diffs[%d].Old must be different with diffs[%d].New. old: %s new: %v", i, i, diffs[i].Old, diffs[i].New)
+				}
+			}
+		}
+	})
 }
 
 var bDiffs []libra.Diff
