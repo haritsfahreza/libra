@@ -8,6 +8,7 @@ import (
 )
 
 type person struct {
+	ID        int `libra:"id"`
 	Name      string
 	Age       int
 	Weight    float64
@@ -102,6 +103,7 @@ func TestCompare(t *testing.T) {
 
 	t.Run("succeed when changed two objects", func(t *testing.T) {
 		diffs, err := libra.Compare(nil, person{
+			ID:        10,
 			Name:      "test1",
 			Age:       22,
 			Weight:    float64(80),
@@ -109,6 +111,7 @@ func TestCompare(t *testing.T) {
 			Hobbies:   []string{"Swimming"},
 			Numbers:   []int{1, 2},
 		}, person{
+			ID:        10,
 			Name:      "test1",
 			Age:       23,
 			Weight:    float64(85),
