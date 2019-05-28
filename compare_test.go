@@ -8,6 +8,7 @@ import (
 )
 
 type person struct {
+	ID        int `libra:"id"`
 	Name      string
 	Age       int
 	Weight    float64
@@ -18,7 +19,9 @@ type person struct {
 }
 
 type anotherPerson struct {
-	Name string
+	ID      int `libra:"id"`
+	IDAgain int `libra:"id"`
+	Name    string
 }
 
 func TestCompare(t *testing.T) {
@@ -102,6 +105,7 @@ func TestCompare(t *testing.T) {
 
 	t.Run("succeed when changed two objects", func(t *testing.T) {
 		diffs, err := libra.Compare(nil, person{
+			ID:        10,
 			Name:      "test1",
 			Age:       22,
 			Weight:    float64(80),
@@ -109,6 +113,7 @@ func TestCompare(t *testing.T) {
 			Hobbies:   []string{"Swimming"},
 			Numbers:   []int{1, 2},
 		}, person{
+			ID:        10,
 			Name:      "test1",
 			Age:       23,
 			Weight:    float64(85),
@@ -214,6 +219,18 @@ func TestCompare(t *testing.T) {
 					t.Errorf("diffs[%d].Old must be different with diffs[%d].New. old: %s new: %v", i, i, diffs[i].Old, diffs[i].New)
 				}
 			}
+		}
+	})
+
+	t.Run("failed when the objects have multiple tag id", func(t *testing.T) {
+		if _, err := libra.Compare(nil, anotherPerson{
+			ID:   10,
+			Name: "test1",
+		}, anotherPerson{
+			ID:   10,
+			Name: "test1",
+		}); err == nil {
+			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
 		}
 	})
 }

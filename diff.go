@@ -18,6 +18,7 @@ const (
 type Diff struct {
 	ChangeType ChangeType  `json:"change_type"`
 	ObjectType string      `json:"object_type"`
+	ObjectID   string      `json:"object_id"`
 	Field      string      `json:"field,omitempty"`
 	Old        interface{} `json:"old,omitempty"`
 	New        interface{} `json:"new,omitempty"`

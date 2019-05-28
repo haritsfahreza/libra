@@ -38,6 +38,7 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 		})
 		return diffs, nil
 	} else {
+		objectID := ""
 		if oldObj.Kind() == reflect.Struct {
 			objectType := oldObj.Type().String()
 			for i := 0; i < oldObj.NumField(); i++ {
@@ -48,6 +49,11 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 				tag := typeField.Tag.Get("libra")
 				if tag == "ignore" {
 					continue
+				} else if tag == "id" {
+					if objectID != "" {
+						return nil, fmt.Errorf("tag `id` should defined once")
+					}
+					objectID = fmt.Sprintf("%v", oldField.Interface())
 				}
 
 				diff, err := generateDiff(ctx, Changed, objectType, typeField.Name, oldField, newField)
@@ -77,6 +83,13 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 		} else {
 			return nil, fmt.Errorf("Unsupported comparable values")
 		}
+
+		if objectID != "" {
+			for i := 0; i < len(diffs); i++ {
+				diffs[i].ObjectID = objectID
+			}
+		}
+
 		return diffs, nil
 	}
 }
