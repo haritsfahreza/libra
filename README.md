@@ -39,7 +39,7 @@ for i, diff := range diffs {
 	fmt.Printf("#%d : ChangeType=%s Field=%s ObjectType=%s Old='%v' New='%v'\n", i, diff.ChangeType, diff.Field, diff.ObjectType, diff.Old, diff.New)
 }
 ```
-Please see [examples](https://github.com/haritsfahreza/libra/tree/master/examples) for the other usage references
+Please see [examples](https://godoc.org/github.com/haritsfahreza/libra#ex-Compare--Struct) for the other usage references
 
 ## Benchmark
 ```sh
