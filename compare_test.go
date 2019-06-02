@@ -18,6 +18,7 @@ type person struct {
 	Hobbies   []string
 	Numbers   []int
 	Ignore    string `libra:"ignore"`
+	Interface interface{}
 }
 
 type anotherPerson struct {
@@ -50,8 +51,8 @@ func TestCompare(t *testing.T) {
 		"failed when unsupported type",
 		args{
 			ctx: nil,
-			old: "foo",
-			new: "bar",
+			old: func() {},
+			new: func() {},
 		},
 		nil,
 		true,
@@ -77,6 +78,20 @@ func TestCompare(t *testing.T) {
 		},
 		nil,
 		true,
+	}, {
+		"succeed compare basic types",
+		args{
+			ctx: nil,
+			old: "foo",
+			new: "bar",
+		},
+		[]libra.Diff{{
+			ChangeType: libra.Changed,
+			ObjectType: "string",
+			Old:        "foo",
+			New:        "bar",
+		}},
+		false,
 	}, {
 		"succeed when create new object",
 		args{
@@ -118,12 +133,14 @@ func TestCompare(t *testing.T) {
 		args{
 			ctx: nil,
 			old: person{
-				ID:   10,
-				Name: "test1",
+				ID:      10,
+				Name:    "test1",
+				Numbers: []int{1, 2, 3},
 			},
 			new: person{
-				ID:   10,
-				Name: "test2",
+				ID:      10,
+				Name:    "test2",
+				Numbers: []int{1, 2, 4},
 			},
 		},
 		[]libra.Diff{{
@@ -133,8 +150,34 @@ func TestCompare(t *testing.T) {
 			ObjectID:   "10",
 			Old:        "test1",
 			New:        "test2",
+		}, {
+			ChangeType: libra.Changed,
+			ObjectType: "libra_test.person",
+			Field:      "Numbers",
+			ObjectID:   "10",
+			Old:        "1,2,3",
+			New:        "1,2,4",
 		}},
 		false,
+	}, {
+		"failed when compare the structs with different value type",
+		args{
+			ctx: nil,
+			old: person{
+				ID:        10,
+				Name:      "test1",
+				Numbers:   []int{1, 2, 3},
+				Interface: "A",
+			},
+			new: person{
+				ID:        10,
+				Name:      "test2",
+				Numbers:   []int{1, 2, 4},
+				Interface: 1,
+			},
+		},
+		nil,
+		true,
 	}, {
 		"succeed when compare the maps",
 		args{
