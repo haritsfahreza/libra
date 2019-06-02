@@ -160,6 +160,28 @@ func TestCompare(t *testing.T) {
 		nil,
 		true,
 	}, {
+		"succeed when compare the pointer",
+		args{
+			ctx: nil,
+			old: &person{
+				ID:   10,
+				Name: "test1",
+			},
+			new: &person{
+				ID:   10,
+				Name: "test2",
+			},
+		},
+		[]libra.Diff{{
+			ChangeType: libra.Changed,
+			ObjectType: "libra_test.person",
+			Field:      "Name",
+			ObjectID:   "10",
+			Old:        "test1",
+			New:        "test2",
+		}},
+		false,
+	}, {
 		"success when ignore the field",
 		args{
 			ctx: nil,
