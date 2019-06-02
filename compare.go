@@ -55,38 +55,36 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 					objectID = fmt.Sprintf("%v", oldField.Interface())
 				}
 
-				diff, err := generateDiff(ctx, Changed, objectType, typeField.Name, oldField, newField)
-				if err != nil {
-					return nil, err
+				if err := validate(ctx, oldField, newField); err != nil {
+					return nil, fmt.Errorf("Error on validate key %s Error : %s", typeField.Name, err.Error())
 				}
 
-				if diff != nil {
+				if diff := generateDiff(ctx, Changed, objectType, typeField.Name, oldField, newField); diff != nil {
 					diffs = append(diffs, *diff)
 				}
 			}
-			break
-
 		case reflect.Map:
 			objectType := oldVal.Type().String()
 			for _, key := range oldVal.MapKeys() {
 				oldField := oldVal.MapIndex(key)
 				newField := newVal.MapIndex(key)
 
-				diff, err := generateDiff(ctx, Changed, objectType, key.String(), oldField, newField)
-				if err != nil {
-					return nil, err
+				if err := validate(ctx, oldField, newField); err != nil {
+					return nil, fmt.Errorf("Error on validate key %s Error : %s", key.String(), err.Error())
 				}
 
-				if diff != nil {
+				if diff := generateDiff(ctx, Changed, objectType, key.String(), oldField, newField); diff != nil {
 					diffs = append(diffs, *diff)
 				}
 			}
-			break
-
 		case reflect.Ptr:
 			return Compare(ctx, oldVal.Elem().Interface(), newVal.Elem().Interface())
-		default:
+		case reflect.Func:
 			return nil, fmt.Errorf("Unsupported comparable values")
+		default:
+			if diff := generateDiff(ctx, Changed, oldVal.Type().String(), "", oldVal, newVal); diff != nil {
+				diffs = append(diffs, *diff)
+			}
 		}
 
 		if objectID != "" {
@@ -99,43 +97,40 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 	}
 }
 
-func generateDiff(ctx context.Context, changeType ChangeType, objectType, fieldName string, oldField, newField reflect.Value) (*Diff, error) {
-	if err := validate(ctx, oldField, newField); err != nil {
-		return nil, fmt.Errorf("Error on validate key %s Error : %s", fieldName, err.Error())
+func generateDiff(ctx context.Context, changeType ChangeType, objectType, fieldName string, oldVal, newVal reflect.Value) *Diff {
+	var oldI, newI interface{}
+	switch oldVal.Kind() {
+	case reflect.Array, reflect.Slice:
+		oldI = reflectArrayToString(ctx, oldVal)
+		newI = reflectArrayToString(ctx, newVal)
+	default:
+		oldI = oldVal.Interface()
+		newI = newVal.Interface()
 	}
 
-	var oldFieldValue, newFieldValue interface{}
-	if reflect.ValueOf(oldField.Interface()).Kind() == reflect.Slice {
-		oldFieldValue = reflectArrayToString(ctx, reflect.ValueOf(oldField.Interface()))
-		newFieldValue = reflectArrayToString(ctx, reflect.ValueOf(newField.Interface()))
-	} else {
-		oldFieldValue = oldField.Interface()
-		newFieldValue = newField.Interface()
-	}
-
-	if oldFieldValue != newFieldValue {
+	if oldI != newI {
 		return &Diff{
 			ChangeType: Changed,
 			ObjectType: objectType,
 			Field:      fieldName,
-			Old:        oldFieldValue,
-			New:        newFieldValue,
-		}, nil
+			Old:        oldI,
+			New:        newI,
+		}
 	}
 
-	return nil, nil
+	return nil
 }
 
-func validate(ctx context.Context, oldValue, newValue reflect.Value) error {
-	if !oldValue.IsValid() && !newValue.IsValid() {
+func validate(ctx context.Context, oldVal, newVal reflect.Value) error {
+	if !oldVal.IsValid() && !newVal.IsValid() {
 		return errors.New("all values cannot be nil")
 	}
 
-	if oldValue.IsValid() && newValue.IsValid() {
-		oldValueType := reflect.ValueOf(oldValue.Interface()).Type()
-		newValueType := reflect.ValueOf(newValue.Interface()).Type()
+	if oldVal.IsValid() && newVal.IsValid() {
+		ov := reflect.ValueOf(oldVal.Interface())
+		nv := reflect.ValueOf(newVal.Interface())
 
-		if oldValueType != newValueType {
+		if ov.IsValid() && nv.IsValid() && ov.Type() != nv.Type() {
 			return errors.New("different values type")
 		}
 	}
