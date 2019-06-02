@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-var defaultValue = reflect.Value{}
-
 //Compare is used to compare two different values and spot the differences from them
 func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 	oldVal := reflect.ValueOf(old)
@@ -21,7 +19,7 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 
 	diffs := []Diff{}
 
-	if oldVal == defaultValue && newVal != defaultValue {
+	if !oldVal.IsValid() && newVal.IsValid() {
 		//New object
 		diffs = append(diffs, Diff{
 			ChangeType: New,
@@ -29,7 +27,7 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 			New:        newVal.Interface(),
 		})
 		return diffs, nil
-	} else if oldVal != defaultValue && newVal == defaultValue {
+	} else if oldVal.IsValid() && !newVal.IsValid() {
 		//Removed object
 		diffs = append(diffs, Diff{
 			ChangeType: Removed,
@@ -39,7 +37,8 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 		return diffs, nil
 	} else {
 		objectID := ""
-		if oldVal.Kind() == reflect.Struct {
+		switch oldVal.Kind() {
+		case reflect.Struct:
 			objectType := oldVal.Type().String()
 			for i := 0; i < oldVal.NumField(); i++ {
 				typeField := oldVal.Type().Field(i)
@@ -65,7 +64,9 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 					diffs = append(diffs, *diff)
 				}
 			}
-		} else if oldVal.Kind() == reflect.Map {
+			break
+
+		case reflect.Map:
 			objectType := oldVal.Type().String()
 			for _, key := range oldVal.MapKeys() {
 				oldField := oldVal.MapIndex(key)
@@ -80,7 +81,11 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 					diffs = append(diffs, *diff)
 				}
 			}
-		} else {
+			break
+
+		case reflect.Ptr:
+			return Compare(ctx, oldVal.Elem().Interface(), newVal.Elem().Interface())
+		default:
 			return nil, fmt.Errorf("Unsupported comparable values")
 		}
 
@@ -122,11 +127,11 @@ func generateDiff(ctx context.Context, changeType ChangeType, objectType, fieldN
 }
 
 func validate(ctx context.Context, oldValue, newValue reflect.Value) error {
-	if oldValue == defaultValue && newValue == defaultValue {
+	if !oldValue.IsValid() && !newValue.IsValid() {
 		return errors.New("all values cannot be nil")
 	}
 
-	if oldValue != defaultValue && newValue != defaultValue {
+	if oldValue.IsValid() && newValue.IsValid() {
 		oldValueType := reflect.ValueOf(oldValue.Interface()).Type()
 		newValueType := reflect.ValueOf(newValue.Interface()).Type()
 
