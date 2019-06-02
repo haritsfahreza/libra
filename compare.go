@@ -12,39 +12,39 @@ var defaultValue = reflect.Value{}
 
 //Compare is used to compare two different values and spot the differences from them
 func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
-	oldObj := reflect.ValueOf(old)
-	newObj := reflect.ValueOf(new)
+	oldVal := reflect.ValueOf(old)
+	newVal := reflect.ValueOf(new)
 
-	if err := validate(ctx, oldObj, newObj); err != nil {
+	if err := validate(ctx, oldVal, newVal); err != nil {
 		return nil, err
 	}
 
 	diffs := []Diff{}
 
-	if oldObj == defaultValue && newObj != defaultValue {
+	if oldVal == defaultValue && newVal != defaultValue {
 		//New object
 		diffs = append(diffs, Diff{
 			ChangeType: New,
-			ObjectType: newObj.Type().String(),
-			New:        newObj.Interface(),
+			ObjectType: newVal.Type().String(),
+			New:        newVal.Interface(),
 		})
 		return diffs, nil
-	} else if oldObj != defaultValue && newObj == defaultValue {
+	} else if oldVal != defaultValue && newVal == defaultValue {
 		//Removed object
 		diffs = append(diffs, Diff{
 			ChangeType: Removed,
-			ObjectType: oldObj.Type().String(),
-			Old:        oldObj,
+			ObjectType: oldVal.Type().String(),
+			Old:        oldVal.Interface(),
 		})
 		return diffs, nil
 	} else {
 		objectID := ""
-		if oldObj.Kind() == reflect.Struct {
-			objectType := oldObj.Type().String()
-			for i := 0; i < oldObj.NumField(); i++ {
-				typeField := oldObj.Type().Field(i)
-				oldField := oldObj.Field(i)
-				newField := newObj.Field(i)
+		if oldVal.Kind() == reflect.Struct {
+			objectType := oldVal.Type().String()
+			for i := 0; i < oldVal.NumField(); i++ {
+				typeField := oldVal.Type().Field(i)
+				oldField := oldVal.Field(i)
+				newField := newVal.Field(i)
 
 				tag := typeField.Tag.Get("libra")
 				if tag == "ignore" {
@@ -65,11 +65,11 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 					diffs = append(diffs, *diff)
 				}
 			}
-		} else if oldObj.Kind() == reflect.Map {
-			objectType := oldObj.Type().String()
-			for _, key := range oldObj.MapKeys() {
-				oldField := oldObj.MapIndex(key)
-				newField := newObj.MapIndex(key)
+		} else if oldVal.Kind() == reflect.Map {
+			objectType := oldVal.Type().String()
+			for _, key := range oldVal.MapKeys() {
+				oldField := oldVal.MapIndex(key)
+				newField := newVal.MapIndex(key)
 
 				diff, err := generateDiff(ctx, Changed, objectType, key.String(), oldField, newField)
 				if err != nil {

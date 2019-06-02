@@ -1,7 +1,9 @@
 package libra_test
 
 import (
+	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/haritsfahreza/libra"
@@ -25,214 +27,191 @@ type anotherPerson struct {
 }
 
 func TestCompare(t *testing.T) {
-	t.Run("failed when all nil", func(t *testing.T) {
-		if _, err := libra.Compare(nil, nil, nil); err == nil {
-			t.Errorf("Error must not be nil. expected: %s actual: %v", "all values cannot be nil", err)
-		}
-	})
-
-	t.Run("failed when different type", func(t *testing.T) {
-		if _, err := libra.Compare(nil, "", 1); err == nil {
-			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
-		}
-
-		if _, err := libra.Compare(nil, person{
-			Name: "test1",
-		}, anotherPerson{
-			Name: "test1",
-		}); err == nil {
-			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
-		}
-	})
-
-	t.Run("succeed when create new object", func(t *testing.T) {
-		diffs, err := libra.Compare(nil, nil, person{
-			Name: "test1",
-			Age:  22,
-		})
-		if err != nil {
-			t.Errorf("Error must be nil. Got: %v", err)
-		}
-		if len(diffs) != 1 {
-			t.Errorf("Compare result length must be only one. expected: %d actual: %d", 1, len(diffs))
-		}
-
-		if diffs[0].ChangeType != libra.New {
-			t.Errorf("Invalid ChangeType. expected: %s actual: %s", libra.New, diffs[0].ChangeType)
-		}
-
-		if diffs[0].ObjectType != "libra_test.person" {
-			t.Errorf("Invalid ObjectType. expected: %s actual: %s", "libra_test.person", diffs[0].ObjectType)
-		}
-
-		if diffs[0].New == nil {
-			t.Errorf("Invalid New value. expected: %s actual: %v", "not nil", diffs[0].New)
-		}
-
-		if diffs[0].Old != nil {
-			t.Errorf("Invalid Old value. expected: %s actual: %v", "nil", diffs[0].Old)
-		}
-	})
-
-	t.Run("succeed when removed an object", func(t *testing.T) {
-		diffs, err := libra.Compare(nil, person{
-			Name: "test1",
-			Age:  22,
-		}, nil)
-		if err != nil {
-			t.Errorf("Error must be nil. Got: %v", err)
-		}
-		if len(diffs) != 1 {
-			t.Errorf("Compare result length must be only one. expected: %d actual: %d", 1, len(diffs))
-		}
-
-		if diffs[0].ChangeType != libra.Removed {
-			t.Errorf("Invalid ChangeType. expected: %s actual: %s", libra.Removed, diffs[0].ChangeType)
-		}
-
-		if diffs[0].ObjectType != "libra_test.person" {
-			t.Errorf("Invalid ObjectType. expected: %s actual: %s", "libra_test.person", diffs[0].ObjectType)
-		}
-
-		if diffs[0].New != nil {
-			t.Errorf("Invalid New value. expected: %s actual: %v", "nil", diffs[0].New)
-		}
-
-		if diffs[0].Old == nil {
-			t.Errorf("Invalid Old value. expected: %s actual: %v", "not nil", diffs[0].Old)
-		}
-	})
-
-	t.Run("succeed when changed two objects", func(t *testing.T) {
-		diffs, err := libra.Compare(nil, person{
-			ID:        10,
-			Name:      "test1",
-			Age:       22,
-			Weight:    float64(80),
-			IsMarried: true,
-			Hobbies:   []string{"Swimming"},
-			Numbers:   []int{1, 2},
-		}, person{
-			ID:        10,
-			Name:      "test1",
-			Age:       23,
-			Weight:    float64(85),
-			IsMarried: true,
-			Hobbies:   []string{"Swimming", "Hiking"},
-			Numbers:   []int{2},
-		})
-		if err != nil {
-			t.Errorf("Error must be nil. Got: %v", err)
-		}
-
-		expectedFields := []string{"Age", "Weight", "Hobbies", "Numbers"}
-		if len(diffs) != len(expectedFields) {
-			t.Errorf("Invalid result length. expected: %d actual: %d", len(expectedFields), len(diffs))
-		} else {
-			for i := 0; i < len(diffs); i++ {
-				if diffs[i].ChangeType != libra.Changed {
-					t.Errorf("Invalid diffs[%d].ChangeType. expected: %s actual: %s", i, libra.Changed, diffs[i].ChangeType)
-				}
-
-				if diffs[i].ObjectType != "libra_test.person" {
-					t.Errorf("Invalid diffs[%d].ObjectType. expected: %s actual: %s", i, "libra_test.person", diffs[i].ObjectType)
-				}
-
-				if diffs[i].Field != expectedFields[i] {
-					t.Errorf("Invalid diffs[%d].Field. expected: %s actual: %s", i, expectedFields[i], diffs[i].Field)
-				}
-
-				if diffs[i].Old == diffs[i].New {
-					t.Errorf("diffs[%d].Old must be different with diffs[%d].New. old: %s new: %v", i, i, diffs[i].Old, diffs[i].New)
-				}
+	type args struct {
+		ctx context.Context
+		old interface{}
+		new interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []libra.Diff
+		wantErr bool
+	}{{
+		"failed when all nil",
+		args{
+			ctx: nil,
+			old: nil,
+			new: nil,
+		},
+		nil,
+		true,
+	}, {
+		"failed when unsupported type",
+		args{
+			ctx: nil,
+			old: "foo",
+			new: "bar",
+		},
+		nil,
+		true,
+	}, {
+		"failed when different type - 1",
+		args{
+			ctx: nil,
+			old: "",
+			new: 1,
+		},
+		nil,
+		true,
+	}, {
+		"failed when different type - 2",
+		args{
+			ctx: nil,
+			old: person{
+				Name: "test1",
+			},
+			new: anotherPerson{
+				Name: "test1",
+			},
+		},
+		nil,
+		true,
+	}, {
+		"succeed when create new object",
+		args{
+			ctx: nil,
+			old: nil,
+			new: person{
+				Name: "test1",
+			},
+		},
+		[]libra.Diff{{
+			ChangeType: libra.New,
+			ObjectType: "libra_test.person",
+			Old:        nil,
+			New: person{
+				Name: "test1",
+			},
+		}},
+		false,
+	}, {
+		"succeed when remove an object",
+		args{
+			ctx: nil,
+			old: person{
+				Name: "test1",
+			},
+			new: nil,
+		},
+		[]libra.Diff{{
+			ChangeType: libra.Removed,
+			ObjectType: "libra_test.person",
+			Old: person{
+				Name: "test1",
+			},
+			New: nil,
+		}},
+		false,
+	}, {
+		"succeed when compare the structs",
+		args{
+			ctx: nil,
+			old: person{
+				ID:   10,
+				Name: "test1",
+			},
+			new: person{
+				ID:   10,
+				Name: "test2",
+			},
+		},
+		[]libra.Diff{{
+			ChangeType: libra.Changed,
+			ObjectType: "libra_test.person",
+			Field:      "Name",
+			ObjectID:   "10",
+			Old:        "test1",
+			New:        "test2",
+		}},
+		false,
+	}, {
+		"succeed when compare the maps",
+		args{
+			ctx: nil,
+			old: map[string]interface{}{"Age": 22, "Weight": 80},
+			new: map[string]interface{}{"Age": 23, "Weight": 80},
+		},
+		[]libra.Diff{{
+			ChangeType: libra.Changed,
+			ObjectType: "map[string]interface {}",
+			Field:      "Age",
+			Old:        22,
+			New:        23,
+		}},
+		false,
+	}, {
+		"failed when compare the maps with different value type",
+		args{
+			ctx: nil,
+			old: map[string]interface{}{"Age": "A", "Weight": 80},
+			new: map[string]interface{}{"Age": 23, "Weight": 80},
+		},
+		nil,
+		true,
+	}, {
+		"success when ignore the field",
+		args{
+			ctx: nil,
+			old: person{
+				ID:     10,
+				Name:   "test1",
+				Ignore: "Should not compared",
+			},
+			new: person{
+				ID:     10,
+				Name:   "test2",
+				Ignore: "Should not compared 2",
+			},
+		},
+		[]libra.Diff{{
+			ChangeType: libra.Changed,
+			ObjectType: "libra_test.person",
+			Field:      "Name",
+			ObjectID:   "10",
+			Old:        "test1",
+			New:        "test2",
+		}},
+		false,
+	}, {
+		"failed when the objects have multiple tag id",
+		args{
+			ctx: nil,
+			old: anotherPerson{
+				ID:   10,
+				Name: "test1",
+			},
+			new: anotherPerson{
+				ID:   10,
+				Name: "test2",
+			},
+		},
+		nil,
+		true,
+	},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := libra.Compare(tt.args.ctx, tt.args.old, tt.args.new)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Compare() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
-		}
-	})
-
-	t.Run("succeed when changed two maps", func(t *testing.T) {
-		diffs, err := libra.Compare(nil, map[string]interface{}{"Age": 22, "Weight": 80}, map[string]interface{}{"Age": 23, "Weight": 80})
-		if err != nil {
-			t.Errorf("Error must be nil. Got: %v", err)
-		}
-
-		expectedFields := []string{"Age"}
-		if len(diffs) != len(expectedFields) {
-			t.Errorf("Invalid result length. expected: %d actual: %d", len(expectedFields), len(diffs))
-		} else {
-			for i := 0; i < len(diffs); i++ {
-				if diffs[i].ChangeType != libra.Changed {
-					t.Errorf("Invalid diffs[%d].ChangeType. expected: %s actual: %s", i, libra.Changed, diffs[i].ChangeType)
-				}
-
-				if diffs[i].ObjectType != "map[string]interface {}" {
-					t.Errorf("Invalid diffs[%d].ObjectType. expected: %s actual: %s", i, "map[string]interface {}", diffs[i].ObjectType)
-				}
-
-				if diffs[i].Field != expectedFields[i] {
-					t.Errorf("Invalid diffs[%d].Field. expected: %s actual: %s", i, expectedFields[i], diffs[i].Field)
-				}
-
-				if diffs[i].Old == diffs[i].New {
-					t.Errorf("diffs[%d].Old must be different with diffs[%d].New. old: %s new: %v", i, i, diffs[i].Old, diffs[i].New)
-				}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Compare() = %v, want %v", got, tt.want)
 			}
-		}
-	})
-
-	t.Run("failed when the values has different type", func(t *testing.T) {
-		_, err := libra.Compare(nil, map[string]interface{}{"Age": "A", "Weight": 80}, map[string]interface{}{"Age": 12, "Weight": 80})
-		if err == nil {
-			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
-		}
-	})
-
-	t.Run("success when ignore the field", func(t *testing.T) {
-		diffs, err := libra.Compare(nil, person{
-			Name:   "Test A",
-			Ignore: "Should not detected",
-		}, person{
-			Name:   "Test B",
-			Ignore: "Should not detected - ",
 		})
-		if err != nil {
-			t.Errorf("Error must be nil. Got: %v", err)
-		}
-
-		expectedFields := []string{"Name"}
-		if len(diffs) != len(expectedFields) {
-			t.Errorf("Invalid result length. expected: %d actual: %d", len(expectedFields), len(diffs))
-		} else {
-			for i := 0; i < len(diffs); i++ {
-				if diffs[i].ChangeType != libra.Changed {
-					t.Errorf("Invalid diffs[%d].ChangeType. expected: %s actual: %s", i, libra.Changed, diffs[i].ChangeType)
-				}
-
-				if diffs[i].ObjectType != "libra_test.person" {
-					t.Errorf("Invalid diffs[%d].ObjectType. expected: %s actual: %s", i, "libra_test.person", diffs[i].ObjectType)
-				}
-
-				if diffs[i].Field != expectedFields[i] {
-					t.Errorf("Invalid diffs[%d].Field. expected: %s actual: %s", i, expectedFields[i], diffs[i].Field)
-				}
-
-				if diffs[i].Old == diffs[i].New {
-					t.Errorf("diffs[%d].Old must be different with diffs[%d].New. old: %s new: %v", i, i, diffs[i].Old, diffs[i].New)
-				}
-			}
-		}
-	})
-
-	t.Run("failed when the objects have multiple tag id", func(t *testing.T) {
-		if _, err := libra.Compare(nil, anotherPerson{
-			ID:   10,
-			Name: "test1",
-		}, anotherPerson{
-			ID:   10,
-			Name: "test1",
-		}); err == nil {
-			t.Errorf("Error must not be nil. expected: %s actual: %v", "different values type", err)
-		}
-	})
+	}
 }
 
 var bDiffs []libra.Diff
