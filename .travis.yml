@@ -23,7 +23,7 @@ script:
   - go get -t -v ./...
   - diff -u <(echo -n) <(gofmt -d .)
   - go vet $(go list ./... | grep -v /vendor/)
-  - ./go-test.sh
+  - ./scripts/go-test.sh
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
