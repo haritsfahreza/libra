@@ -17,87 +17,96 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 		return nil, err
 	}
 
-	diffs := []Diff{}
-
 	if !oldVal.IsValid() && newVal.IsValid() {
-		//New object
-		diffs = append(diffs, Diff{
-			ChangeType: New,
-			ObjectType: newVal.Type().String(),
-			New:        newVal.Interface(),
-		})
-		return diffs, nil
-	} else if oldVal.IsValid() && !newVal.IsValid() {
-		//Removed object
-		diffs = append(diffs, Diff{
-			ChangeType: Removed,
-			ObjectType: oldVal.Type().String(),
-			Old:        oldVal.Interface(),
-		})
-		return diffs, nil
-	} else {
-		objectID := ""
-		switch oldVal.Kind() {
-		case reflect.Struct:
-			objectType := oldVal.Type().String()
-			for i := 0; i < oldVal.NumField(); i++ {
-				typeField := oldVal.Type().Field(i)
-				oldField := oldVal.Field(i)
-				newField := newVal.Field(i)
+		newDiff := generateNewDiff(ctx, newVal)
+		return []Diff{newDiff}, nil
+	}
 
-				tag := typeField.Tag.Get("libra")
-				if tag == "ignore" {
-					continue
-				} else if tag == "id" {
-					if objectID != "" {
-						return nil, fmt.Errorf("tag `id` should defined once")
-					}
-					objectID = fmt.Sprintf("%v", oldField.Interface())
-				}
+	if oldVal.IsValid() && !newVal.IsValid() {
+		oldDiff := generateRemovedDiff(ctx, oldVal)
+		return []Diff{oldDiff}, nil
+	}
 
-				if err := validate(ctx, oldField, newField); err != nil {
-					return nil, fmt.Errorf("Error on validate key %s Error : %s", typeField.Name, err.Error())
-				}
+	diffs := []Diff{}
+	objectID := ""
+	switch oldVal.Kind() {
+	case reflect.Struct:
+		objectType := oldVal.Type().String()
+		for i := 0; i < oldVal.NumField(); i++ {
+			typeField := oldVal.Type().Field(i)
+			oldField := oldVal.Field(i)
+			newField := newVal.Field(i)
 
-				if diff := generateDiff(ctx, Changed, objectType, typeField.Name, oldField, newField); diff != nil {
-					diffs = append(diffs, *diff)
-				}
+			tag := typeField.Tag.Get("libra")
+			if tag == "ignore" {
+				continue
 			}
-		case reflect.Map:
-			objectType := oldVal.Type().String()
-			for _, key := range oldVal.MapKeys() {
-				oldField := oldVal.MapIndex(key)
-				newField := newVal.MapIndex(key)
 
-				if err := validate(ctx, oldField, newField); err != nil {
-					return nil, fmt.Errorf("Error on validate key %s Error : %s", key.String(), err.Error())
+			if tag == "id" {
+				if objectID != "" {
+					return nil, fmt.Errorf("tag `id` should defined once")
 				}
-
-				if diff := generateDiff(ctx, Changed, objectType, key.String(), oldField, newField); diff != nil {
-					diffs = append(diffs, *diff)
-				}
+				objectID = fmt.Sprintf("%v", oldField.Interface())
 			}
-		case reflect.Ptr:
-			return Compare(ctx, oldVal.Elem().Interface(), newVal.Elem().Interface())
-		case reflect.Func:
-			return nil, fmt.Errorf("Unsupported comparable values")
-		default:
-			if diff := generateDiff(ctx, Changed, oldVal.Type().String(), "", oldVal, newVal); diff != nil {
+
+			if err := validate(ctx, oldField, newField); err != nil {
+				return nil, fmt.Errorf("Error on validate key %s Error : %s", typeField.Name, err.Error())
+			}
+
+			if diff := generateDiff(ctx, objectType, typeField.Name, oldField, newField); diff != nil {
 				diffs = append(diffs, *diff)
 			}
 		}
+	case reflect.Map:
+		objectType := oldVal.Type().String()
+		for _, key := range oldVal.MapKeys() {
+			oldField := oldVal.MapIndex(key)
+			newField := newVal.MapIndex(key)
 
-		if objectID != "" {
-			for i := 0; i < len(diffs); i++ {
-				diffs[i].ObjectID = objectID
+			if err := validate(ctx, oldField, newField); err != nil {
+				return nil, fmt.Errorf("Error on validate key %s Error : %s", key.String(), err.Error())
+			}
+
+			if diff := generateDiff(ctx, objectType, key.String(), oldField, newField); diff != nil {
+				diffs = append(diffs, *diff)
 			}
 		}
+	case reflect.Ptr:
+		return Compare(ctx, oldVal.Elem().Interface(), newVal.Elem().Interface())
+	case reflect.Func:
+		return nil, fmt.Errorf("Unsupported comparable values")
+	default:
+		if diff := generateDiff(ctx, oldVal.Type().String(), "", oldVal, newVal); diff != nil {
+			diffs = append(diffs, *diff)
+		}
+	}
 
-		return diffs, nil
+	if objectID != "" {
+		for i := 0; i < len(diffs); i++ {
+			diffs[i].ObjectID = objectID
+		}
+	}
+
+	return diffs, nil
+}
+
+func generateNewDiff(ctx context.Context, obj reflect.Value) Diff {
+	return Diff{
+		ChangeType: New,
+		ObjectType: obj.Type().String(),
+		New:        obj.Interface(),
 	}
 }
 
-func generateDiff(ctx context.Context, changeType ChangeType, objectType, fieldName string, oldVal, newVal reflect.Value) *Diff {
+func generateRemovedDiff(ctx context.Context, obj reflect.Value) Diff {
+	return Diff{
+		ChangeType: Removed,
+		ObjectType: obj.Type().String(),
+		Old:        obj.Interface(),
+	}
+}
+
+func generateDiff(ctx context.Context, objectType, fieldName string, oldVal, newVal reflect.Value) *Diff {
 	var oldI, newI interface{}
 	switch oldVal.Kind() {
 	case reflect.Array, reflect.Slice:
