@@ -2,7 +2,6 @@ package libra
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -28,10 +27,10 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 	}
 
 	diffs := []Diff{}
-	objectID := ""
+	var objectID, objectType string
 	switch oldVal.Kind() {
 	case reflect.Struct:
-		objectType := oldVal.Type().String()
+		objectType = oldVal.Type().String()
 		for i := 0; i < oldVal.NumField(); i++ {
 			typeField := oldVal.Type().Field(i)
 			oldField := oldVal.Field(i)
@@ -53,12 +52,12 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 				return nil, fmt.Errorf("Error on validate key %s Error : %s", typeField.Name, err.Error())
 			}
 
-			if diff := generateDiff(ctx, objectType, typeField.Name, oldField, newField); diff != nil {
+			if diff := generateChangedDiff(ctx, typeField.Name, oldField, newField); diff != nil {
 				diffs = append(diffs, *diff)
 			}
 		}
 	case reflect.Map:
-		objectType := oldVal.Type().String()
+		objectType = oldVal.Type().String()
 		for _, key := range oldVal.MapKeys() {
 			oldField := oldVal.MapIndex(key)
 			newField := newVal.MapIndex(key)
@@ -67,7 +66,7 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 				return nil, fmt.Errorf("Error on validate key %s Error : %s", key.String(), err.Error())
 			}
 
-			if diff := generateDiff(ctx, objectType, key.String(), oldField, newField); diff != nil {
+			if diff := generateChangedDiff(ctx, key.String(), oldField, newField); diff != nil {
 				diffs = append(diffs, *diff)
 			}
 		}
@@ -76,15 +75,15 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 	case reflect.Func:
 		return nil, fmt.Errorf("Unsupported comparable values")
 	default:
-		if diff := generateDiff(ctx, oldVal.Type().String(), "", oldVal, newVal); diff != nil {
+		objectType = oldVal.Type().String()
+		if diff := generateChangedDiff(ctx, "", oldVal, newVal); diff != nil {
 			diffs = append(diffs, *diff)
 		}
 	}
 
-	if objectID != "" {
-		for i := 0; i < len(diffs); i++ {
-			diffs[i].ObjectID = objectID
-		}
+	for i := 0; i < len(diffs); i++ {
+		diffs[i].ObjectType = objectType
+		diffs[i].ObjectID = objectID
 	}
 
 	return diffs, nil
@@ -106,7 +105,7 @@ func generateRemovedDiff(ctx context.Context, obj reflect.Value) Diff {
 	}
 }
 
-func generateDiff(ctx context.Context, objectType, fieldName string, oldVal, newVal reflect.Value) *Diff {
+func generateChangedDiff(ctx context.Context, fieldName string, oldVal, newVal reflect.Value) *Diff {
 	var oldI, newI interface{}
 	switch oldVal.Kind() {
 	case reflect.Array, reflect.Slice:
@@ -120,7 +119,6 @@ func generateDiff(ctx context.Context, objectType, fieldName string, oldVal, new
 	if oldI != newI {
 		return &Diff{
 			ChangeType: Changed,
-			ObjectType: objectType,
 			Field:      fieldName,
 			Old:        oldI,
 			New:        newI,
@@ -132,7 +130,7 @@ func generateDiff(ctx context.Context, objectType, fieldName string, oldVal, new
 
 func validate(ctx context.Context, oldVal, newVal reflect.Value) error {
 	if !oldVal.IsValid() && !newVal.IsValid() {
-		return errors.New("all values cannot be nil")
+		return fmt.Errorf("all values cannot be nil")
 	}
 
 	if oldVal.IsValid() && newVal.IsValid() {
@@ -140,7 +138,7 @@ func validate(ctx context.Context, oldVal, newVal reflect.Value) error {
 		nv := reflect.ValueOf(newVal.Interface())
 
 		if ov.IsValid() && nv.IsValid() && ov.Type() != nv.Type() {
-			return errors.New("different values type")
+			return fmt.Errorf("different values type")
 		}
 	}
 
