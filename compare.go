@@ -52,6 +52,16 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 				return nil, fmt.Errorf("Error on validate key %s Error : %s", typeField.Name, err.Error())
 			}
 
+			nestedDiffs, err := compareBaseKind(ctx, typeField.Name, oldField, newField)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(nestedDiffs) > 0 {
+				diffs = append(diffs, nestedDiffs...)
+				continue
+			}
+
 			if diff := generateChangedDiff(ctx, typeField.Name, oldField, newField); diff != nil {
 				diffs = append(diffs, *diff)
 			}
@@ -64,6 +74,16 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 
 			if err := validate(ctx, oldField, newField); err != nil {
 				return nil, fmt.Errorf("Error on validate key %s Error : %s", key.String(), err.Error())
+			}
+
+			nestedDiffs, err := compareBaseKind(ctx, key.String(), oldField, newField)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(nestedDiffs) > 0 {
+				diffs = append(diffs, nestedDiffs...)
+				continue
 			}
 
 			if diff := generateChangedDiff(ctx, key.String(), oldField, newField); diff != nil {
@@ -126,6 +146,34 @@ func generateChangedDiff(ctx context.Context, fieldName string, oldVal, newVal r
 	}
 
 	return nil
+}
+
+func compareBaseKind(ctx context.Context, baseFieldName string, oldField, newField reflect.Value) ([]Diff, error) {
+	var oldF, newF reflect.Value
+	if oldField.Kind() == reflect.Interface {
+		oldF = reflect.ValueOf(oldField.Interface())
+		newF = reflect.ValueOf(newField.Interface())
+	} else {
+		oldF = oldField
+		newF = newField
+	}
+
+	if oldF.Kind() == reflect.Struct ||
+		oldF.Kind() == reflect.Map ||
+		oldF.Kind() == reflect.Ptr ||
+		oldF.Kind() == reflect.Func {
+		nestedDiffs, err := Compare(ctx, oldF.Interface(), newF.Interface())
+		if err != nil {
+			return nil, err
+		}
+
+		for i := 0; i < len(nestedDiffs); i++ {
+			nestedDiffs[i].Field = fmt.Sprintf("%s.%s", baseFieldName, nestedDiffs[i].Field)
+		}
+
+		return nestedDiffs, nil
+	}
+	return []Diff{}, nil
 }
 
 func validate(ctx context.Context, oldVal, newVal reflect.Value) error {

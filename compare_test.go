@@ -19,6 +19,13 @@ type person struct {
 	Numbers   []int
 	Ignore    string `libra:"ignore"`
 	Interface interface{}
+	Address   address
+}
+
+type address struct {
+	Street    string
+	City      string
+	Interface interface{}
 }
 
 type anotherPerson struct {
@@ -194,11 +201,35 @@ func TestCompare(t *testing.T) {
 		}},
 		false,
 	}, {
+		"succeed when compare maps with nested struct",
+		args{
+			ctx: nil,
+			old: map[string]interface{}{"Age": 22, "Person": person{Name: "Rima"}},
+			new: map[string]interface{}{"Age": 22, "Person": person{Name: "Reza"}},
+		},
+		[]libra.Diff{{
+			ChangeType: libra.Changed,
+			ObjectType: "map[string]interface {}",
+			Field:      "Person.Name",
+			Old:        "Rima",
+			New:        "Reza",
+		}},
+		false,
+	}, {
 		"failed when compare the maps with different value type",
 		args{
 			ctx: nil,
 			old: map[string]interface{}{"Age": "A", "Weight": 80},
 			new: map[string]interface{}{"Age": 23, "Weight": 80},
+		},
+		nil,
+		true,
+	}, {
+		"failed when compare the maps with different value in nested type",
+		args{
+			ctx: nil,
+			old: map[string]interface{}{"Weight": 80, "Person": person{Interface: "A"}},
+			new: map[string]interface{}{"Weight": 80, "Person": person{Interface: 1}},
 		},
 		nil,
 		true,
@@ -248,6 +279,55 @@ func TestCompare(t *testing.T) {
 			New:        "test2",
 		}},
 		false,
+	}, {
+		"success when compare nested struct",
+		args{
+			ctx: nil,
+			old: person{
+				ID:   10,
+				Name: "test1",
+				Address: address{
+					Street: "jalan 123",
+				},
+			},
+			new: person{
+				ID:   10,
+				Name: "test1",
+				Address: address{
+					Street: "jalan ABC",
+				},
+			},
+		},
+		[]libra.Diff{{
+			ChangeType: libra.Changed,
+			ObjectType: "libra_test.person",
+			Field:      "Address.Street",
+			ObjectID:   "10",
+			Old:        "jalan 123",
+			New:        "jalan ABC",
+		}},
+		false,
+	}, {
+		"failed when compare different field type in nested struct",
+		args{
+			ctx: nil,
+			old: person{
+				ID:   10,
+				Name: "test1",
+				Address: address{
+					Interface: "A",
+				},
+			},
+			new: person{
+				ID:   10,
+				Name: "test1",
+				Address: address{
+					Interface: 10,
+				},
+			},
+		},
+		nil,
+		true,
 	}, {
 		"failed when the objects have multiple tag id",
 		args{
