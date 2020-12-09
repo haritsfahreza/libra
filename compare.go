@@ -58,6 +58,10 @@ func Compare(ctx context.Context, old, new interface{}) ([]Diff, error) {
 			}
 
 			if len(nestedDiffs) > 0 {
+				if objectID == "" && nestedDiffs[0].ObjectID != "" {
+					objectID = nestedDiffs[0].ObjectID
+				}
+
 				diffs = append(diffs, nestedDiffs...)
 				continue
 			}
