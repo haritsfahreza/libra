@@ -236,6 +236,22 @@ func TestStructComparator_Compare(t *testing.T) {
 				New:        "Jalan ABC",
 			}},
 			false,
+		}, {
+			"succeed when compare embedded struct without any change inside of it",
+			args{
+				ctx: nil,
+				old: oldEmbeddedAddressWithoutChange,
+				new: newEmbeddedAddressWithoutChange,
+			},
+			[]diff.Diff{{
+				ChangeType: diff.Changed,
+				ObjectType: "comparator_test.embeddedAddress",
+				Field:      "Street",
+				ObjectID:   "10",
+				Old:        "Jalan 123",
+				New:        "Jalan ABC",
+			}},
+			false,
 		},
 	}
 	for _, tt := range tests {
