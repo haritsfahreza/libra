@@ -1,5 +1,5 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/haritsfahreza/libra.svg)](https://pkg.go.dev/github.com/haritsfahreza/libra)
-[![Build Status](https://travis-ci.org/haritsfahreza/libra.svg?branch=master)](https://travis-ci.org/haritsfahreza/libra)
+[![CircleCI](https://circleci.com/gh/haritsfahreza/libra.svg?style=svg)](https://circleci.com/gh/haritsfahreza/libra)
 [![codecov](https://codecov.io/gh/haritsfahreza/libra/branch/master/graph/badge.svg)](https://codecov.io/gh/haritsfahreza/libra)
 [![Go Report Card](https://goreportcard.com/badge/github.com/haritsfahreza/libra)](https://goreportcard.com/report/github.com/haritsfahreza/libra)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
