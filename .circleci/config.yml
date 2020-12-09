@@ -19,7 +19,7 @@ jobs:
             mkdir -p /tmp/artifacts
       - run:
           command: |
-            scripts/codecov-go-test-result.sh
+            ./scripts/codecov-go-test-result.sh
             mv coverage.txt /tmp/artifacts
       - codecov/upload:
           file: /tmp/artifacts/coverage.txt
