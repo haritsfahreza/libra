@@ -1,18 +1,21 @@
-[![GoDoc](https://godoc.org/github.com/haritsfahreza/libra?status.svg)](https://godoc.org/github.com/haritsfahreza/libra)
+[![Go Reference](https://pkg.go.dev/badge/github.com/haritsfahreza/libra.svg)](https://pkg.go.dev/github.com/haritsfahreza/libra)
 [![Build Status](https://travis-ci.org/haritsfahreza/libra.svg?branch=master)](https://travis-ci.org/haritsfahreza/libra)
 [![codecov](https://codecov.io/gh/haritsfahreza/libra/branch/master/graph/badge.svg)](https://codecov.io/gh/haritsfahreza/libra)
 [![Go Report Card](https://goreportcard.com/badge/github.com/haritsfahreza/libra)](https://goreportcard.com/report/github.com/haritsfahreza/libra)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 # libra
+
 Libra is a Go library to compare the interface (struct, maps, etc) and spot the differences between two of them.
 
 ## Installing
+
 ```sh
 $ go get -u github.com/haritsfahreza/libra
 ```
 
 ## Usage
+
 ```go
 //Prepare the objects that you want to compare
 oldPerson := Person{
@@ -39,16 +42,8 @@ for i, diff := range diffs {
 	fmt.Printf("#%d : ChangeType=%s Field=%s ObjectType=%s Old='%v' New='%v'\n", i, diff.ChangeType, diff.Field, diff.ObjectType, diff.Old, diff.New)
 }
 ```
-Please see [examples](https://godoc.org/github.com/haritsfahreza/libra#ex-Compare--Struct) for the other usage references
 
-## Benchmark
-```sh
-goos: linux
-goarch: amd64
-pkg: github.com/haritsfahreza/libra
-BenchmarkCompareStruct-8   	  500000	      2840 ns/op	    1136 B/op	      31 allocs/op
-BenchmarkCompareMap-8      	  300000	      4781 ns/op	    1696 B/op	      54 allocs/op
-```
+Please see [examples](https://pkg.go.dev/github.com/haritsfahreza/libra#ex-Compare--Struct) for the other usage references
 
 ## Contributing
 
@@ -56,11 +51,11 @@ Please read [CONTRIBUTING.md](https://github.com/haritsfahreza/libra/blob/master
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/haritsfahreza/libra/tags). 
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/haritsfahreza/libra/tags).
 
 ## Authors
 
-* **Harits Fahreza Christyonotoputra** - *Initial work* - [haritsfahreza](https://github.com/haritsfahreza)
+- **Harits Fahreza Christyonotoputra** - _Initial work_ - [haritsfahreza](https://github.com/haritsfahreza)
 
 See also the list of [contributors](https://github.com/haritsfahreza/libra/contributors) who participated in this project.
 
@@ -70,5 +65,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* With `libra`, you can speed up your Go software development, especially when you build the object auditing and data versioning system.
-* This project is inspired by [`Javers`](https://javers.org).
+- With `libra`, you can speed up your Go software development, especially when you build the object auditing and data versioning system.
+- This project is inspired by [`Javers`](https://javers.org).
