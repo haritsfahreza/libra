@@ -126,7 +126,7 @@ func TestStructComparator_Compare(t *testing.T) {
 			nil,
 			true,
 		}, {
-			"success when ignore the field",
+			"succeed when ignore the field",
 			args{
 				ctx: nil,
 				old: person{
@@ -150,7 +150,7 @@ func TestStructComparator_Compare(t *testing.T) {
 			}},
 			false,
 		}, {
-			"success when compare nested struct",
+			"succeed when compare nested struct",
 			args{
 				ctx: nil,
 				old: person{
@@ -214,7 +214,7 @@ func TestStructComparator_Compare(t *testing.T) {
 			nil,
 			true,
 		}, {
-			"success when compare embedded struct with any change inside of it",
+			"succeed when compare embedded struct with any change inside of it",
 			args{
 				ctx: nil,
 				old: oldEmbeddedAddress,
