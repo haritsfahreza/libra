@@ -45,7 +45,7 @@ func (c *MapComparator) Compare(ctx context.Context, oldVal, newVal reflect.Valu
 			continue
 		}
 
-		if diff := diff.GenerateChangedDiff(ctx, key.String(), oldField, newField); diff != nil {
+		if diff := diff.GenerateChangedDiff(ctx, key.String(), filteredOldValue, filteredNewValue); diff != nil {
 			diffs = append(diffs, *diff)
 		}
 	}

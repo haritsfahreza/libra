@@ -37,6 +37,21 @@ func TestMapComparator_Compare(t *testing.T) {
 			}},
 			false,
 		}, {
+			"succeed when compare the maps with array",
+			args{
+				ctx: nil,
+				old: map[string]interface{}{"Age": 22, "Numbers": []int{1, 2, 3}},
+				new: map[string]interface{}{"Age": 22, "Numbers": []int{1, 2, 4}},
+			},
+			[]diff.Diff{{
+				ChangeType: diff.Changed,
+				ObjectType: "map[string]interface {}",
+				Field:      "Numbers",
+				Old:        "1,2,3",
+				New:        "1,2,4",
+			}},
+			false,
+		}, {
 			"succeed when compare maps with nested struct",
 			args{
 				ctx: nil,
