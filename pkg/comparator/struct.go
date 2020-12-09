@@ -15,7 +15,6 @@ var _ Comparator = (*StructComparator)(nil)
 func (c *StructComparator) Compare(ctx context.Context, oldVal, newVal reflect.Value) ([]diff.Diff, error) {
 	diffs := []diff.Diff{}
 	objectType := oldVal.Type().String()
-	objectID := ""
 	for i := 0; i < oldVal.NumField(); i++ {
 		typeField := oldVal.Type().Field(i)
 		oldField := oldVal.Field(i)
@@ -24,13 +23,6 @@ func (c *StructComparator) Compare(ctx context.Context, oldVal, newVal reflect.V
 		tag := typeField.Tag.Get("libra")
 		if tag == "ignore" {
 			continue
-		}
-
-		if tag == "id" {
-			if objectID != "" {
-				return nil, fmt.Errorf("tag `id` should defined once")
-			}
-			objectID = fmt.Sprintf("%v", oldField.Interface())
 		}
 
 		if err := Validate(ctx, oldField, newField); err != nil {
@@ -50,10 +42,6 @@ func (c *StructComparator) Compare(ctx context.Context, oldVal, newVal reflect.V
 				return nil, err
 			}
 
-			if objectID == "" && len(nestedDiffs) > 0 && nestedDiffs[0].ObjectID != "" {
-				objectID = nestedDiffs[0].ObjectID
-			}
-
 			diffs = append(diffs, nestedDiffs...)
 			continue
 		}
@@ -63,10 +51,48 @@ func (c *StructComparator) Compare(ctx context.Context, oldVal, newVal reflect.V
 		}
 	}
 
+	objectID, err := getObjectID(ctx, oldVal)
+	if err != nil {
+		return nil, err
+	}
+
 	for i := 0; i < len(diffs); i++ {
 		diffs[i].ObjectType = objectType
 		diffs[i].ObjectID = objectID
 	}
 
 	return diffs, nil
+}
+
+func getObjectID(ctx context.Context, v reflect.Value) (string, error) {
+	objectID := ""
+	for i := 0; i < v.NumField(); i++ {
+		typeField := v.Type().Field(i)
+		field := v.Field(i)
+		if field.Kind() == reflect.Struct {
+			objectIDInField, err := getObjectID(ctx, field)
+			if err != nil {
+				return "", err
+			}
+
+			if objectID != "" && objectIDInField != "" {
+				return "", fmt.Errorf("tag `id` should defined once")
+			}
+
+			if objectID == "" && objectIDInField != "" {
+				objectID = objectIDInField
+			}
+			continue
+		}
+
+		tag := typeField.Tag.Get("libra")
+		if tag == "id" {
+			if objectID != "" {
+				return "", fmt.Errorf("tag `id` should defined once")
+			}
+			objectID = fmt.Sprintf("%v", field.Interface())
+		}
+	}
+
+	return objectID, nil
 }
