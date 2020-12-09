@@ -1,4 +1,4 @@
-package libra
+package diff
 
 //ChangeType represents the objects change type
 type ChangeType string
