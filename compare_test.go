@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/haritsfahreza/libra"
+	"github.com/haritsfahreza/libra/pkg/diff"
 )
 
 type person struct {
@@ -19,24 +20,6 @@ type person struct {
 	Numbers   []int
 	Ignore    string `libra:"ignore"`
 	Interface interface{}
-	Address   address
-}
-
-type address struct {
-	Street    string
-	City      string
-	Interface interface{}
-}
-
-type AddressToBeEmbedded struct {
-	ID        int `libra:"id"`
-	Street    string
-	City      string `libra:"ignore"`
-	Interface interface{}
-}
-
-type embeddedAddress struct {
-	AddressToBeEmbedded
 }
 
 type anotherPerson struct {
@@ -46,16 +29,6 @@ type anotherPerson struct {
 }
 
 func TestCompare(t *testing.T) {
-	oldEmbeddedAddress := embeddedAddress{}
-	oldEmbeddedAddress.ID = 10
-	oldEmbeddedAddress.Street = "Jalan 123"
-	oldEmbeddedAddress.City = "Malang"
-
-	newEmbeddedAddress := embeddedAddress{}
-	newEmbeddedAddress.ID = 10
-	newEmbeddedAddress.Street = "Jalan ABC"
-	oldEmbeddedAddress.City = "Ngalam"
-
 	type args struct {
 		ctx context.Context
 		old interface{}
@@ -64,7 +37,7 @@ func TestCompare(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []libra.Diff
+		want    []diff.Diff
 		wantErr bool
 	}{
 		{
@@ -73,15 +46,6 @@ func TestCompare(t *testing.T) {
 				ctx: nil,
 				old: nil,
 				new: nil,
-			},
-			nil,
-			true,
-		}, {
-			"failed when unsupported type",
-			args{
-				ctx: nil,
-				old: func() {},
-				new: func() {},
 			},
 			nil,
 			true,
@@ -108,20 +72,6 @@ func TestCompare(t *testing.T) {
 			nil,
 			true,
 		}, {
-			"succeed compare basic types",
-			args{
-				ctx: nil,
-				old: "foo",
-				new: "bar",
-			},
-			[]libra.Diff{{
-				ChangeType: libra.Changed,
-				ObjectType: "string",
-				Old:        "foo",
-				New:        "bar",
-			}},
-			false,
-		}, {
 			"succeed when create new object",
 			args{
 				ctx: nil,
@@ -130,8 +80,8 @@ func TestCompare(t *testing.T) {
 					Name: "test1",
 				},
 			},
-			[]libra.Diff{{
-				ChangeType: libra.New,
+			[]diff.Diff{{
+				ChangeType: diff.New,
 				ObjectType: "libra_test.person",
 				Old:        nil,
 				New: person{
@@ -148,237 +98,13 @@ func TestCompare(t *testing.T) {
 				},
 				new: nil,
 			},
-			[]libra.Diff{{
-				ChangeType: libra.Removed,
+			[]diff.Diff{{
+				ChangeType: diff.Removed,
 				ObjectType: "libra_test.person",
 				Old: person{
 					Name: "test1",
 				},
 				New: nil,
-			}},
-			false,
-		}, {
-			"succeed when compare the structs",
-			args{
-				ctx: nil,
-				old: person{
-					ID:      10,
-					Name:    "test1",
-					Numbers: []int{1, 2, 3},
-				},
-				new: person{
-					ID:      10,
-					Name:    "test2",
-					Numbers: []int{1, 2, 4},
-				},
-			},
-			[]libra.Diff{{
-				ChangeType: libra.Changed,
-				ObjectType: "libra_test.person",
-				Field:      "Name",
-				ObjectID:   "10",
-				Old:        "test1",
-				New:        "test2",
-			}, {
-				ChangeType: libra.Changed,
-				ObjectType: "libra_test.person",
-				Field:      "Numbers",
-				ObjectID:   "10",
-				Old:        "1,2,3",
-				New:        "1,2,4",
-			}},
-			false,
-		}, {
-			"failed when compare the structs with different value type",
-			args{
-				ctx: nil,
-				old: person{
-					ID:        10,
-					Name:      "test1",
-					Numbers:   []int{1, 2, 3},
-					Interface: "A",
-				},
-				new: person{
-					ID:        10,
-					Name:      "test2",
-					Numbers:   []int{1, 2, 4},
-					Interface: 1,
-				},
-			},
-			nil,
-			true,
-		}, {
-			"succeed when compare the maps",
-			args{
-				ctx: nil,
-				old: map[string]interface{}{"Age": 22, "Weight": 80},
-				new: map[string]interface{}{"Age": 23, "Weight": 80},
-			},
-			[]libra.Diff{{
-				ChangeType: libra.Changed,
-				ObjectType: "map[string]interface {}",
-				Field:      "Age",
-				Old:        22,
-				New:        23,
-			}},
-			false,
-		}, {
-			"succeed when compare maps with nested struct",
-			args{
-				ctx: nil,
-				old: map[string]interface{}{"Age": 22, "Person": person{Name: "Rima"}},
-				new: map[string]interface{}{"Age": 22, "Person": person{Name: "Reza"}},
-			},
-			[]libra.Diff{{
-				ChangeType: libra.Changed,
-				ObjectType: "map[string]interface {}",
-				Field:      "Person.Name",
-				Old:        "Rima",
-				New:        "Reza",
-			}},
-			false,
-		}, {
-			"failed when compare the maps with different value type",
-			args{
-				ctx: nil,
-				old: map[string]interface{}{"Age": "A", "Weight": 80},
-				new: map[string]interface{}{"Age": 23, "Weight": 80},
-			},
-			nil,
-			true,
-		}, {
-			"failed when compare the maps with different value in nested type",
-			args{
-				ctx: nil,
-				old: map[string]interface{}{"Weight": 80, "Person": person{Interface: "A"}},
-				new: map[string]interface{}{"Weight": 80, "Person": person{Interface: 1}},
-			},
-			nil,
-			true,
-		}, {
-			"succeed when compare the pointer",
-			args{
-				ctx: nil,
-				old: &person{
-					ID:   10,
-					Name: "test1",
-				},
-				new: &person{
-					ID:   10,
-					Name: "test2",
-				},
-			},
-			[]libra.Diff{{
-				ChangeType: libra.Changed,
-				ObjectType: "libra_test.person",
-				Field:      "Name",
-				ObjectID:   "10",
-				Old:        "test1",
-				New:        "test2",
-			}},
-			false,
-		}, {
-			"success when ignore the field",
-			args{
-				ctx: nil,
-				old: person{
-					ID:     10,
-					Name:   "test1",
-					Ignore: "Should not compared",
-				},
-				new: person{
-					ID:     10,
-					Name:   "test2",
-					Ignore: "Should not compared 2",
-				},
-			},
-			[]libra.Diff{{
-				ChangeType: libra.Changed,
-				ObjectType: "libra_test.person",
-				Field:      "Name",
-				ObjectID:   "10",
-				Old:        "test1",
-				New:        "test2",
-			}},
-			false,
-		}, {
-			"success when compare nested struct",
-			args{
-				ctx: nil,
-				old: person{
-					ID:   10,
-					Name: "test1",
-					Address: address{
-						Street: "jalan 123",
-					},
-				},
-				new: person{
-					ID:   10,
-					Name: "test1",
-					Address: address{
-						Street: "jalan ABC",
-					},
-				},
-			},
-			[]libra.Diff{{
-				ChangeType: libra.Changed,
-				ObjectType: "libra_test.person",
-				Field:      "Address.Street",
-				ObjectID:   "10",
-				Old:        "jalan 123",
-				New:        "jalan ABC",
-			}},
-			false,
-		}, {
-			"failed when compare different field type in nested struct",
-			args{
-				ctx: nil,
-				old: person{
-					ID:   10,
-					Name: "test1",
-					Address: address{
-						Interface: "A",
-					},
-				},
-				new: person{
-					ID:   10,
-					Name: "test1",
-					Address: address{
-						Interface: 10,
-					},
-				},
-			},
-			nil,
-			true,
-		}, {
-			"failed when the objects have multiple tag id",
-			args{
-				ctx: nil,
-				old: anotherPerson{
-					ID:   10,
-					Name: "test1",
-				},
-				new: anotherPerson{
-					ID:   10,
-					Name: "test2",
-				},
-			},
-			nil,
-			true,
-		}, {
-			"success when compare embedded struct",
-			args{
-				ctx: nil,
-				old: oldEmbeddedAddress,
-				new: newEmbeddedAddress,
-			},
-			[]libra.Diff{{
-				ChangeType: libra.Changed,
-				ObjectType: "libra_test.embeddedAddress",
-				Field:      "AddressToBeEmbedded.Street",
-				ObjectID:   "10",
-				Old:        "Jalan 123",
-				New:        "Jalan ABC",
 			}},
 			false,
 		},
@@ -397,10 +123,10 @@ func TestCompare(t *testing.T) {
 	}
 }
 
-var bDiffs []libra.Diff
+var bDiffs []diff.Diff
 
 func benchmarkCompare(old, new interface{}, b *testing.B) {
-	var diffs []libra.Diff
+	var diffs []diff.Diff
 	var err error
 	for i := 0; i < b.N; i++ {
 		diffs, err = libra.Compare(nil, old, new)
