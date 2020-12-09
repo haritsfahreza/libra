@@ -27,11 +27,5 @@ func Compare(ctx context.Context, old, new interface{}) ([]diff.Diff, error) {
 		return []diff.Diff{oldDiff}, nil
 	}
 
-	comparator := comparator.GetComparator(oldVal.Kind())
-	diffs, err := comparator.Compare(ctx, oldVal, newVal)
-	if err != nil {
-		return nil, err
-	}
-
-	return diffs, nil
+	return comparator.GetComparator(oldVal.Kind()).Compare(ctx, oldVal, newVal)
 }
