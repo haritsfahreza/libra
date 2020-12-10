@@ -46,7 +46,7 @@ func (c *StructComparator) Compare(ctx context.Context, oldVal, newVal reflect.V
 			continue
 		}
 
-		if diff := diff.GenerateChangedDiff(ctx, typeField.Name, oldField, newField); diff != nil {
+		if diff := diff.GenerateChangedDiff(ctx, typeField.Name, filteredOldValue, filteredNewValue); diff != nil {
 			diffs = append(diffs, *diff)
 		}
 	}

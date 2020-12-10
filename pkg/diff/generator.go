@@ -25,6 +25,11 @@ func GenerateRemovedDiff(ctx context.Context, obj reflect.Value) Diff {
 
 func GenerateChangedDiff(ctx context.Context, fieldName string, oldVal, newVal reflect.Value) *Diff {
 	var oldI, newI interface{}
+
+	if !oldVal.IsValid() || !newVal.IsValid() {
+		return nil
+	}
+
 	switch oldVal.Kind() {
 	case reflect.Array, reflect.Slice:
 		oldI = reflectArrayToString(ctx, oldVal)
