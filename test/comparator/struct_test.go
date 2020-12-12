@@ -4,22 +4,24 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/haritsfahreza/libra/pkg/comparator"
 	"github.com/haritsfahreza/libra/pkg/diff"
 )
 
 type person struct {
-	ID        int `libra:"id"`
-	Name      string
-	Age       int
-	Weight    float64
-	IsMarried bool
-	Hobbies   []string
-	Numbers   []int
-	Ignore    string `libra:"ignore"`
-	Interface interface{}
-	Address   address
+	ID          int `libra:"id"`
+	Name        string
+	Age         int
+	Weight      float64
+	IsMarried   bool
+	Hobbies     []string
+	Numbers     []int
+	Ignore      string `libra:"ignore"`
+	Interface   interface{}
+	Address     address
+	DateOfBirth time.Time
 }
 
 type address struct {
@@ -80,14 +82,16 @@ func TestStructComparator_Compare(t *testing.T) {
 			args{
 				ctx: nil,
 				old: person{
-					ID:      10,
-					Name:    "test1",
-					Numbers: []int{1, 2, 3},
+					ID:          10,
+					Name:        "test1",
+					Numbers:     []int{1, 2, 3},
+					DateOfBirth: time.Date(2020, time.May, 4, 0, 0, 0, 0, time.UTC),
 				},
 				new: person{
-					ID:      10,
-					Name:    "test2",
-					Numbers: []int{1, 2, 4},
+					ID:          10,
+					Name:        "test2",
+					Numbers:     []int{1, 2, 4},
+					DateOfBirth: time.Date(2020, time.May, 30, 0, 0, 0, 0, time.UTC),
 				},
 			},
 			[]diff.Diff{{
@@ -104,6 +108,13 @@ func TestStructComparator_Compare(t *testing.T) {
 				ObjectID:   "10",
 				Old:        "1,2,3",
 				New:        "1,2,4",
+			}, {
+				ChangeType: diff.Changed,
+				ObjectType: "comparator_test.person",
+				Field:      "DateOfBirth",
+				ObjectID:   "10",
+				Old:        "2020-05-04 00:00:00 +0000 UTC",
+				New:        "2020-05-30 00:00:00 +0000 UTC",
 			}},
 			false,
 		}, {
