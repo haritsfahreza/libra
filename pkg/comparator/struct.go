@@ -21,7 +21,7 @@ func (c *StructComparator) Compare(ctx context.Context, oldVal, newVal reflect.V
 		newField := newVal.Field(i)
 
 		tag := typeField.Tag.Get("libra")
-		if tag == "ignore" {
+		if tag == "ignore" || tag == "id" {
 			continue
 		}
 
