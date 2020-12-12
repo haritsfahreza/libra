@@ -24,8 +24,8 @@ func (c *MapComparator) Compare(ctx context.Context, oldVal, newVal reflect.Valu
 			return nil, fmt.Errorf("Error on validate key %s Error : %s", key.String(), err.Error())
 		}
 
-		filteredOldValue := getInterfaceValue(oldField)
-		filteredNewValue := getInterfaceValue(newField)
+		filteredOldValue := filterValue(oldField)
+		filteredNewValue := filterValue(newField)
 		if isNestedKind(filteredOldValue.Kind()) {
 			nestedDiffs, err := compareNestedField(
 				ctx,

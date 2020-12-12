@@ -29,8 +29,8 @@ func (c *StructComparator) Compare(ctx context.Context, oldVal, newVal reflect.V
 			return nil, fmt.Errorf("Error on validate key %s Error : %s", typeField.Name, err.Error())
 		}
 
-		filteredOldValue := getInterfaceValue(oldField)
-		filteredNewValue := getInterfaceValue(newField)
+		filteredOldValue := filterValue(oldField)
+		filteredNewValue := filterValue(newField)
 		if isNestedKind(filteredOldValue.Kind()) {
 			nestedDiffs, err := compareNestedField(
 				ctx,

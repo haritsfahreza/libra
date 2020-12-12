@@ -50,9 +50,13 @@ func isNestedKind(kind reflect.Kind) bool {
 		kind == reflect.Func
 }
 
-func getInterfaceValue(v reflect.Value) reflect.Value {
+func filterValue(v reflect.Value) reflect.Value {
 	if v.Kind() == reflect.Interface {
 		return reflect.ValueOf(v.Interface())
+	}
+
+	if m := v.MethodByName("String"); m.IsValid() {
+		return m.Call([]reflect.Value{})[0]
 	}
 
 	return v

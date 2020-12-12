@@ -45,6 +45,21 @@ for i, diff := range diffs {
 
 Please see [examples](https://pkg.go.dev/github.com/haritsfahreza/libra#ex-Compare--Struct) for the other usage references
 
+### Comparing struct with private fields
+
+Currently, we need to have `String` function to get the value of the struct with private fields since `reflect` library would not be able to compare them.
+
+```go
+type HiddenPerson struct {
+	name string
+	age int
+}
+
+func (h HiddenPerson) String() string {
+	return fmt.Sprintf("%s, %d", h.name, h.age)
+}
+```
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](https://github.com/haritsfahreza/libra/blob/master/CODE_OF_CONDUCT.md) for details on our code of conduct, and the process for submitting pull requests to us.
