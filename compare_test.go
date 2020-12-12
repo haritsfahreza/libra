@@ -77,14 +77,17 @@ func TestCompare(t *testing.T) {
 				ctx: nil,
 				old: nil,
 				new: person{
+					ID:   1,
 					Name: "test1",
 				},
 			},
 			[]diff.Diff{{
 				ChangeType: diff.New,
 				ObjectType: "libra_test.person",
+				ObjectID:   "1",
 				Old:        nil,
 				New: person{
+					ID:   1,
 					Name: "test1",
 				},
 			}},
@@ -94,6 +97,7 @@ func TestCompare(t *testing.T) {
 			args{
 				ctx: nil,
 				old: person{
+					ID:   1,
 					Name: "test1",
 				},
 				new: nil,
@@ -101,7 +105,9 @@ func TestCompare(t *testing.T) {
 			[]diff.Diff{{
 				ChangeType: diff.Removed,
 				ObjectType: "libra_test.person",
+				ObjectID:   "1",
 				Old: person{
+					ID:   1,
 					Name: "test1",
 				},
 				New: nil,
