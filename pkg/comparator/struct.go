@@ -26,7 +26,7 @@ func (c *StructComparator) Compare(ctx context.Context, oldVal, newVal reflect.V
 		}
 
 		if err := Validate(ctx, oldField, newField); err != nil {
-			return nil, fmt.Errorf("Error on validate key %s Error : %s", typeField.Name, err.Error())
+			return nil, fmt.Errorf("error on validate key %s Error : %s", typeField.Name, err.Error())
 		}
 
 		filteredOldValue := filterValue(oldField)

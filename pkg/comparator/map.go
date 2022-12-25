@@ -21,7 +21,7 @@ func (c *MapComparator) Compare(ctx context.Context, oldVal, newVal reflect.Valu
 		newField := newVal.MapIndex(key)
 
 		if err := Validate(ctx, oldField, newField); err != nil {
-			return nil, fmt.Errorf("Error on validate key %s Error : %s", key.String(), err.Error())
+			return nil, fmt.Errorf("error on validate key %s Error : %s", key.String(), err.Error())
 		}
 
 		filteredOldValue := filterValue(oldField)

@@ -13,5 +13,5 @@ type FunctionComparator struct{}
 var _ Comparator = (*FunctionComparator)(nil)
 
 func (c *FunctionComparator) Compare(ctx context.Context, oldVal, newVal reflect.Value) ([]diff.Diff, error) {
-	return nil, fmt.Errorf("Unsupported comparable values")
+	return nil, fmt.Errorf("unsupported comparable values")
 }
