@@ -22,7 +22,7 @@ func TestGenericComparator_Compare(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"succeed compare basic types",
+			"succeed compare basic types with one diff",
 			args{
 				ctx: nil,
 				old: "foo",
@@ -34,6 +34,16 @@ func TestGenericComparator_Compare(t *testing.T) {
 				Old:        "foo",
 				New:        "bar",
 			}},
+			false,
+		},
+		{
+			"succeed compare same basic types with empty diff",
+			args{
+				ctx: nil,
+				old: "foo",
+				new: "foo",
+			},
+			[]diff.Diff{},
 			false,
 		},
 	}
