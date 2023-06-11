@@ -3,10 +3,9 @@ orbs:
   codecov: codecov/codecov@1.0.2
 jobs:
   build:
+    working_directory:  ~/repo
     docker:
       - image: cimg/go:1.20
-
-    working_directory: /go/src/github.com/haritsfahreza/libra
     steps:
       - checkout
       - restore_cache:
@@ -21,16 +20,13 @@ jobs:
             - "/go/pkg/mod"
       - run: go build
       - run:
-          name: "Create a temp directory for artifacts"
-          command: |
-            mkdir -p /tmp/artifacts
-      - run:
           name: "Generate Go test coverage"
           command: |
+            mkdir -p /tmp/test-reports
             scripts/codecov-go-test-result.sh
-            mv coverage.txt /tmp/artifacts
+            mv coverage.txt /tmp/test-reports
       - codecov/upload:
-          file: /tmp/artifacts/coverage.txt
+          file: /tmp/test-reports/coverage.txt
 
 workflows:
   build-workflow:
