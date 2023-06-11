@@ -3,6 +3,7 @@ package libra_test
 import (
 	"context"
 	"fmt"
+	"math"
 	"reflect"
 	"testing"
 
@@ -211,4 +212,70 @@ func ExampleCompare_struct() {
 	// #0 : ChangeType=changed Field=Weight ObjectType=libra_test.person Old='50' New='60'
 	// #1 : ChangeType=changed Field=Hobbies ObjectType=libra_test.person Old='Coding' New='Hacking'
 	// #2 : ChangeType=changed Field=Numbers ObjectType=libra_test.person Old='0,1,2' New='1,2,3'
+}
+
+func FuzzCompare_String(f *testing.F) {
+	f.Add("foo", "bar")
+	f.Fuzz(func(t *testing.T, old, new string) {
+		_, err := libra.Compare(context.Background(), old, new)
+		if err != nil {
+			t.Errorf("Compare() error = %v", err)
+			return
+		}
+	})
+}
+
+func FuzzCompare_Bytes(f *testing.F) {
+	f.Add([]byte("foo"), []byte("bar"))
+	f.Fuzz(func(t *testing.T, old, new []byte) {
+		_, err := libra.Compare(context.Background(), old, new)
+		if err != nil {
+			t.Errorf("Compare() error = %v", err)
+			return
+		}
+	})
+}
+
+func FuzzCompare_Int(f *testing.F) {
+	f.Add(math.MaxInt64, math.MinInt64)
+	f.Fuzz(func(t *testing.T, old, new int) {
+		_, err := libra.Compare(context.Background(), old, new)
+		if err != nil {
+			t.Errorf("Compare() error = %v", err)
+			return
+		}
+	})
+}
+
+func FuzzCompare_Uint(f *testing.F) {
+	f.Add(uint(math.MaxUint64), uint(0))
+	f.Fuzz(func(t *testing.T, old, new uint) {
+		_, err := libra.Compare(context.Background(), old, new)
+		if err != nil {
+			t.Errorf("Compare() error = %v", err)
+			return
+		}
+	})
+}
+
+func FuzzCompare_Float(f *testing.F) {
+	f.Add(math.MaxFloat64, math.SmallestNonzeroFloat64)
+	f.Fuzz(func(t *testing.T, old, new float64) {
+		_, err := libra.Compare(context.Background(), old, new)
+		if err != nil {
+			t.Errorf("Compare() error = %v", err)
+			return
+		}
+	})
+}
+
+func FuzzCompare_Bool(f *testing.F) {
+	f.Add(true, false)
+	f.Fuzz(func(t *testing.T, old, new bool) {
+		_, err := libra.Compare(context.Background(), old, new)
+		if err != nil {
+			t.Errorf("Compare() error = %v", err)
+			return
+		}
+	})
 }
