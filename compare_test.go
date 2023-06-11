@@ -135,7 +135,7 @@ func benchmarkCompare(old, new interface{}, b *testing.B) {
 	var diffs []diff.Diff
 	var err error
 	for i := 0; i < b.N; i++ {
-		diffs, err = libra.Compare(nil, old, new)
+		diffs, err = libra.Compare(context.Background(), old, new)
 		if err != nil {
 			panic(err)
 		}
@@ -199,7 +199,7 @@ func ExampleCompare_struct() {
 		Numbers:   []int{1, 2, 3},
 	}
 
-	diffs, err := libra.Compare(nil, oldPerson, newPerson)
+	diffs, err := libra.Compare(context.Background(), oldPerson, newPerson)
 	if err != nil {
 		panic(err)
 	}
