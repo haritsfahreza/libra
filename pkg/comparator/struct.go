@@ -20,6 +20,10 @@ func (c *StructComparator) Compare(ctx context.Context, oldVal, newVal reflect.V
 		oldField := oldVal.Field(i)
 		newField := newVal.Field(i)
 
+		if !typeField.IsExported() {
+			continue
+		}
+
 		tag := typeField.Tag.Get("libra")
 		if tag == "ignore" || tag == "id" {
 			continue

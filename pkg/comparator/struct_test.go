@@ -47,6 +47,12 @@ type anotherPerson struct {
 	Name    string
 }
 
+type structWithPrivateField struct {
+	ID         int `libra:"id"`
+	Name       string
+	secretName string
+}
+
 func TestStructComparator_Compare(t *testing.T) {
 	oldEmbeddedAddress := embeddedAddress{}
 	oldEmbeddedAddress.ID = 10
@@ -261,6 +267,28 @@ func TestStructComparator_Compare(t *testing.T) {
 				ObjectID:   "10",
 				Old:        "Jalan 123",
 				New:        "Jalan ABC",
+			}},
+			false,
+		}, {
+			"succeed when compare struct with private field",
+			args{
+				ctx: nil,
+				old: structWithPrivateField{
+					ID:   10,
+					Name: "test1",
+				},
+				new: structWithPrivateField{
+					ID:   10,
+					Name: "test2",
+				},
+			},
+			[]diff.Diff{{
+				ChangeType: diff.Changed,
+				ObjectType: "comparator_test.structWithPrivateField",
+				Field:      "Name",
+				ObjectID:   "10",
+				Old:        "test1",
+				New:        "test2",
 			}},
 			false,
 		},
