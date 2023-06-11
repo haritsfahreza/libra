@@ -4,8 +4,7 @@ orbs:
 jobs:
   build:
     docker:
-      # specify the version
-      - image: circleci/golang:1.20
+      - image: cimg/go:1.20
 
     working_directory: /go/src/github.com/haritsfahreza/libra
     steps:
